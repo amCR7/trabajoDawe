@@ -1,0 +1,13 @@
+{
+  "name": "tienda-web",
+  "version": "1.0.0",
+  "description": "Aplicación de tienda web - Primera iteración",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx http-server public -p 8080"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  },
+  "type": "module"
+}

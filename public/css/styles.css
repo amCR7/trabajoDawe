@@ -1,0 +1,47 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    background-image: url("../imagenes/fondo.png");
+    background-repeat: repeat;
+    background-position: top left;
+}
+
+#contenedor {
+    width: 90%;
+    margin: 0 auto;
+    min-height: 100vh;
+    color: white;
+}
+
+header {
+  background: rgba(252, 249, 249, 0.35); 
+}
+
+header h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+#panel-lateral {
+  width: 30%;                 
+  background: rgba(0,0,0,0.25);
+  border-radius: 8px;
+}
+
+#principal {
+  width: 70%;                 
+  background: rgba(0,0,0,0.20);
+  border-radius: 8px;
+}
+
+#principal hr {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+
+
+
