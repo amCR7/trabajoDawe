@@ -58,6 +58,21 @@ header h1 {
 #pie-pagina {
     background: rgba(0, 0, 0, 0.6);
     text-align: center;
-    /* no hace falta width: 100% si quieres que no ocupe toda la anchura */
-    /* si LO quieres a todo el ancho de #contenedor, puedes añadir: width: 100%; */
 }
+
+.mensaje-carrito {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(-10px, 45px);
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  z-index: 10;
+  pointer-events: none;
+}
+
+
+
