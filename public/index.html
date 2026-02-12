@@ -47,10 +47,10 @@
                     <label for="tipo-producto" class="form-label">Tipo de producto</label>
                     <select id="tipo-producto" class="form-select" required>
                         <option value="">Escoge un tipo</option>
-                        <option value="videojuego">Videojuego</option>
-                        <option value="libro">Libro</option>
-                        <option value="ropa">Ropa</option>
-                        <option value="electronica">Electrónica</option>
+                        <option value="televisor">Televisor</option>
+                        <option value="smartphone">Smartphone</option>
+                        <option value="audio">Audio (altavoz / auriculares)</option>
+                        <option value="accesorio">Accesorio</option>
                         <option value="juguete">Juguete</option>
                     </select>
                 </div>
@@ -216,26 +216,34 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-12 col-sm-6 col-md-4">
+                    <div class="card h-100">
+                        <button type="button"   class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 btn-add-carrito" aria-label="Añadir al carrito">
+                            🛒
+                        </button>
+
+                        <img src="imagenes/GODVideojuegoPS5.png" class="card-img-top" alt="Videojuego">
+                        <div class="card-body">
+                            <h5 class="card-title">God of War Ragnarök (PS5)</h5>
+                            <p class="card-text">
+                                Videojuego de acción y aventura ambientado en la mitología nórdica,
+                                con combates intensos, narrativa épica y gráficos de nueva generación.
+                            </p>
+                            <div class="fw-bold">79.99 €</div>
+                            <small class="text-muted">Extra: PS5</small>
+                        </div>
+                    </div>
+                </div>
+
 
             </div>
 
+            <div id="info-paginacion" class="text-center mt-3">
+                Mostrando 0 de 0
+            </div>
+
             <div class="d-flex justify-content-center mt-3">
-                <div id="paginacion" class="d-flex justify-content-center">
-                    <nav aria-label="Paginación de productos">
-                        <ul class="pagination m-0">
-                            <li class="page-item disabled" id="btn-anterior">
-                                <a class="page-link" href="#">Anterior</a>
-                            </li>
-
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-
-                            <li class="page-item" id="btn-siguiente">
-                                <a class="page-link" href="#">Siguiente</a>
-                            </li>
-                         </ul>
-                    </nav>
-                </div>
+                <div id="paginacion"></div>
             </div>
 
         </main>
