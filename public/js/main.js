@@ -123,3 +123,154 @@ document.addEventListener("DOMContentLoaded", () => {
   // Inicializa
   actualizar();
 });
+
+// --------------------
+// DRAG & DROP IMAGEN + PREVIEW + RESET
+// --------------------
+document.addEventListener("DOMContentLoaded", () => {
+
+  const dragDropArea = document.getElementById("drag-drop-area");
+  const fileInput = document.getElementById("archivo-imagen");
+  const formulario = document.getElementById("formulario-producto");
+
+  if (!dragDropArea || !fileInput || !formulario) return;
+
+  const mensajeOriginal = "Arrastra una imagen aquí o haz clic";
+
+  function mostrarPreview(file) {
+    if (!file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function (e) {
+      dragDropArea.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = e.target.result;
+
+      dragDropArea.appendChild(img);
+      dragDropArea.classList.add("added", "preview");
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function resetDragDrop() {
+    dragDropArea.innerHTML = `<p class="m-0">${mensajeOriginal}</p>`;
+    dragDropArea.classList.remove("added", "preview", "drag-over");
+    fileInput.value = "";
+  }
+
+  // Click abre selector
+  dragDropArea.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  // Arrastrando encima
+  dragDropArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dragDropArea.classList.add("drag-over");
+  });
+
+  dragDropArea.addEventListener("dragleave", () => {
+    dragDropArea.classList.remove("drag-over");
+  });
+
+  // Soltar archivo
+  dragDropArea.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragDropArea.classList.remove("drag-over");
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      fileInput.files = e.dataTransfer.files;
+      mostrarPreview(file);
+    }
+  });
+
+  // Selección manual
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    if (file) {
+      mostrarPreview(file);
+    }
+  });
+
+  // RESET cuando se envía el formulario
+  formulario.addEventListener("submit", () => {
+    setTimeout(() => {
+      resetDragDrop();
+    }, 100); 
+  });
+
+});
+
+// --------------------
+// DESCRIPCIÓN EXTENDIDA DEL PRODUCTO (seguro)
+// --------------------
+document.addEventListener("DOMContentLoaded", () => {
+
+  document.addEventListener("click", (e) => {
+    const img = e.target.closest(".card img");
+    if (!img) return; // solo reaccionar al click en imagen
+
+    // Si ya hay un modal abierto, cerrarlo y salir
+    const existingOverlay = document.querySelector(".product-overlay");
+    const existingModal = document.querySelector(".product-modal");
+    if (existingOverlay || existingModal) {
+      existingOverlay?.remove();
+      existingModal?.remove();
+      return; //  importantísimo para que no cree otro modal
+    }
+
+    const card = img.closest(".card");
+
+    // Obtener datos del producto
+    const titulo = card.querySelector(".card-title")?.textContent || "";
+    const precio = card.querySelector(".fw-bold")?.textContent || "";
+    const extra = card.querySelector("small")?.textContent || "";
+    const descripcion = card.querySelector(".card-text")?.textContent || "";
+
+    // Crear overlay
+    const overlay = document.createElement("div");
+    overlay.className = "product-overlay";
+
+    // Crear modal
+    const modal = document.createElement("div");
+    modal.className = "product-modal";
+
+    // Imagen
+    const modalImage = document.createElement("div");
+    modalImage.className = "modal-image";
+    const modalImg = document.createElement("img");
+    modalImg.src = img.src;
+    modalImage.appendChild(modalImg);
+
+    // Detalles
+    const modalDetails = document.createElement("div");
+    modalDetails.className = "modal-details";
+    modalDetails.innerHTML = `
+      <span class="close-modal">&times;</span>
+      <h3>${titulo}</h3>
+      <div class="price">${precio}</div>
+      <div class="extra">${extra}</div>
+      <div class="description">${descripcion}</div>
+    `;
+
+    modal.appendChild(modalImage);
+    modal.appendChild(modalDetails);
+
+    // Añadir al body
+    document.body.appendChild(overlay);
+    document.body.appendChild(modal);
+
+    // Función cerrar
+    function cerrarModal() {
+      modal.remove();
+      overlay.remove();
+    }
+
+    overlay.addEventListener("click", cerrarModal);
+    modal.querySelector(".close-modal").addEventListener("click", cerrarModal);
+  });
+
+});
