@@ -142,18 +142,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const gridProductos = document.getElementById("grid-productos");
   const infoPaginacion = document.getElementById("info-paginacion");
   const paginacionDiv = document.getElementById("paginacion");
+  const inputBuscador = document.getElementById("buscador");
+  const tituloMain = document.getElementById("titulo-productos");
+
+
 
   if (!gridProductos || !infoPaginacion || !paginacionDiv) {
     console.error("Faltan elementos: #grid-productos, #info-paginacion o #paginacion");
     return;
   }
 
-  // Guardamos TODOS los productos 
-  const productos = Array.from(gridProductos.children);
+  const productosOriginales = Array.from(gridProductos.children);
+  let productosFiltrados = [...productosOriginales];
+
 
   function getTotalPaginas() {
-    return Math.ceil(productos.length / PRODUCTOS_POR_PAGINA);
+    return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA); 
   }
+
+
 
   function pintarProductos() {
     gridProductos.innerHTML = "";
@@ -161,16 +168,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA;
     const fin = inicio + PRODUCTOS_POR_PAGINA;
 
-    const productosPagina = productos.slice(inicio, fin);
+    const productosPagina = productosFiltrados.slice(inicio, fin);
     productosPagina.forEach((nodo) => gridProductos.appendChild(nodo));
 
-    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productos.length}`;
+    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productosFiltrados.length}`;
   }
 
+
   function pintarBotones() {
+    const total = getTotalPaginas();
+    if (total <= 1) {
+      paginacionDiv.innerHTML = "";
+      return;
+    }
+
     paginacionDiv.innerHTML = "";
 
-    const total = getTotalPaginas();
     const nav = document.createElement("nav");
     nav.setAttribute("aria-label", "Paginación de productos");
 
@@ -229,8 +242,37 @@ document.addEventListener("DOMContentLoaded", () => {
     pintarBotones();
   }
 
-  // Inicializa
-  actualizar();
+  function aplicarBusqueda() {
+    const texto = (inputBuscador?.value ?? "").trim();
+    const textoLower = texto.toLowerCase();
+
+    if (tituloMain) {
+      tituloMain.textContent = (texto === "")
+        ? "Todos los productos"
+        : `Buscando por: ${texto}`;
+    }
+
+    if (texto === "") {
+      productosFiltrados = [...productosOriginales];
+    } else {
+      productosFiltrados = productosOriginales.filter((card) => {
+        const nombre = card.querySelector(".card-title")?.textContent ?? "";
+        return nombre.toLowerCase().includes(textoLower);
+      });
+    }
+
+    paginaActual = 1;
+    actualizar();
+  }
+
+
+
+  if (inputBuscador) {
+    inputBuscador.addEventListener("input", aplicarBusqueda);
+    aplicarBusqueda();
+  } else {
+    actualizar();
+  }
 });
 
 // --------------------
@@ -380,5 +422,6 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay.addEventListener("click", cerrarModal);
     modal.querySelector(".close-modal").addEventListener("click", cerrarModal);
   });
+
 
 });
