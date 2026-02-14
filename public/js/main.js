@@ -1,5 +1,8 @@
+import { Producto } from './producto.js';
+
 const PRODUCTOS_POR_PAGINA = 6;
 let paginaActual = 1;
+let carrito = [];
 
 // --------------------
 // CARRITO: mensaje 1-2s
@@ -16,6 +19,94 @@ function mostrarMensajeCarrito(card, texto) {
   setTimeout(() => msg.remove(), 1500);
 }
 
+// --------------------
+// TOTAL CARRITO
+// --------------------
+function actualizarTotalCarrito() {
+  const totalCarrito = carrito.reduce((sum, p) => {
+    const cant = p.cantidad ?? 1;
+    return sum + (p.precio * cant);
+  }, 0);
+
+  const carritoTotal = document.getElementById("carrito-total");
+  carritoTotal.innerHTML = `<h5>Total: ${totalCarrito.toFixed(2)} €</h5>`;
+}
+
+// --------------------
+// AGREGAR AL CARRITO
+// --------------------
+function agregarAlCarrito(producto) {
+  const existente = carrito.find(p => p.id === producto.id);
+
+  if (existente) {
+    existente.cantidad = Math.min(20, (existente.cantidad ?? 1) + 1);
+  } else {
+    producto.cantidad = 1;
+    carrito.push(producto);
+  }
+
+  mostrarCarrito();
+}
+
+// --------------------
+// MOSTRAR CARRITO
+// --------------------
+function mostrarCarrito() {
+  const carritoProductos = document.getElementById("carrito-productos");
+  carritoProductos.innerHTML = "";
+
+  carrito.forEach((producto) => {
+    const cantidadInicial = producto.cantidad ?? 1;
+
+    const divProducto = document.createElement("div");
+    divProducto.className = "d-flex align-items-center mb-3";
+
+    divProducto.innerHTML = `
+      <img src="${producto.imagen}" alt="${producto.nombre}" class="img-fluid" style="width: 50px; height: 50px; margin-right: 10px;">
+      <div class="flex-fill">
+        <div><strong>${producto.nombre}</strong></div>
+        <div>${producto.precio} €</div>
+
+        <input type="number"
+          class="form-control cantidad"
+          value="${cantidadInicial}"
+          min="1" max="20"
+        >
+
+        <div class="precio-total mt-1">
+          Total: ${(producto.precio * cantidadInicial).toFixed(2)} €
+        </div>
+      </div>
+    `;
+
+    const input = divProducto.querySelector("input.cantidad");
+    const totalLineaDiv = divProducto.querySelector(".precio-total");
+
+    input.addEventListener("input", () => {
+      let cantidad = parseInt(input.value, 10);
+      if (Number.isNaN(cantidad)) cantidad = 1;
+      cantidad = Math.max(1, Math.min(20, cantidad));
+      input.value = cantidad;
+
+      // Actualiza el objeto
+      producto.cantidad = cantidad;
+
+      // Actualiza total de esa línea
+      totalLineaDiv.textContent = `Total: ${(producto.precio * cantidad).toFixed(2)} €`;
+
+      // Actualiza total del carrito
+      actualizarTotalCarrito();
+    });
+
+    carritoProductos.appendChild(divProducto);
+  });
+
+  actualizarTotalCarrito();
+}
+
+// --------------------
+// CLICK AÑADIR AL CARRITO
+// --------------------
 document.addEventListener("click", (e) => {
   const boton = e.target.closest(".btn-add-carrito");
   if (!boton) return;
@@ -23,6 +114,24 @@ document.addEventListener("click", (e) => {
   const card = boton.closest(".card");
   if (!card) return;
 
+  const nombreProducto = card.querySelector(".card-title").textContent;
+  const precioProducto = parseFloat(card.querySelector(".fw-bold").textContent.replace(" €", ""));
+  const descripcionProducto = card.querySelector(".card-text")?.textContent || "Descripción no disponible";
+  const imagenProducto = card.querySelector(".card-img-top").src;
+
+  //id no aleatorio
+  if (!card.dataset.pid) {
+    card.dataset.pid = nombreProducto
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-]/g, "");
+  }
+  const idProducto = card.dataset.pid;
+
+  const producto = new Producto(idProducto, nombreProducto, precioProducto, descripcionProducto, imagenProducto);
+
+  agregarAlCarrito(producto);
   mostrarMensajeCarrito(card, "Añadido al carrito ✅");
 });
 
@@ -39,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Guardamos TODOS los productos (cada hijo es un <div class="col-...">)
+  // Guardamos TODOS los productos 
   const productos = Array.from(gridProductos.children);
 
   function getTotalPaginas() {
@@ -112,7 +221,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function actualizar() {
-    // Por seguridad: si cambia el total y te quedas en una página inválida
+    
     const total = getTotalPaginas();
     if (paginaActual > total) paginaActual = total || 1;
 
@@ -205,7 +314,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --------------------
-// DESCRIPCIÓN EXTENDIDA DEL PRODUCTO (seguro)
+// DESCRIPCIÓN EXTENDIDA DEL PRODUCTO 
 // --------------------
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -219,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (existingOverlay || existingModal) {
       existingOverlay?.remove();
       existingModal?.remove();
-      return; //  importantísimo para que no cree otro modal
+      return;
     }
 
     const card = img.closest(".card");
@@ -259,7 +368,6 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.appendChild(modalImage);
     modal.appendChild(modalDetails);
 
-    // Añadir al body
     document.body.appendChild(overlay);
     document.body.appendChild(modal);
 
