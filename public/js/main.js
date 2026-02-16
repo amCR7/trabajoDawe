@@ -3,6 +3,7 @@ import { Producto } from './producto.js';
 const PRODUCTOS_POR_PAGINA = 6;
 let paginaActual = 1;
 let carrito = [];
+const MAX_COPIAS = 20;
 
 // --------------------
 // CARRITO: mensaje 1-2s
@@ -20,6 +21,34 @@ function mostrarMensajeCarrito(card, texto) {
 }
 
 // --------------------
+// AVISO debajo del input del carrito (estilo como la foto)
+// --------------------
+function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
+  const slot = lineaProductoDiv.querySelector(".aviso-slot");
+  if (!slot) return;
+
+  slot.innerHTML = "";
+
+  const msg = document.createElement("div");
+  msg.className = "aviso-max-copias";
+  msg.textContent = texto;
+
+  // Estilo inline para que siempre se vea (no depende del CSS)
+  msg.style.background = "#f8d7da";
+  msg.style.border = "1px solid #f5c2c7";
+  msg.style.color = "#842029";
+  msg.style.padding = "10px 12px";
+  msg.style.borderRadius = "6px";
+  msg.style.marginTop = "10px";
+  msg.style.fontSize = "0.9rem";
+  msg.style.fontWeight = "600";
+
+  slot.appendChild(msg);
+
+  setTimeout(() => msg.remove(), 1500);
+}
+
+// --------------------
 // TOTAL CARRITO
 // --------------------
 function actualizarTotalCarrito() {
@@ -29,6 +58,7 @@ function actualizarTotalCarrito() {
   }, 0);
 
   const carritoTotal = document.getElementById("carrito-total");
+  if (!carritoTotal) return;
   carritoTotal.innerHTML = `<h5>Total: ${totalCarrito.toFixed(2)} €</h5>`;
 }
 
@@ -39,7 +69,15 @@ function agregarAlCarrito(producto) {
   const existente = carrito.find(p => p.id === producto.id);
 
   if (existente) {
-    existente.cantidad = Math.min(20, (existente.cantidad ?? 1) + 1);
+    const actual = existente.cantidad ?? 1;
+
+    if (actual >= MAX_COPIAS) {
+      // NO actualizar (se queda en 20) y marcar para mostrar aviso en el carrito
+      existente._avisarMax = true;
+      existente.cantidad = MAX_COPIAS;
+    } else {
+      existente.cantidad = Math.min(MAX_COPIAS, actual + 1);
+    }
   } else {
     producto.cantidad = 1;
     carrito.push(producto);
@@ -53,6 +91,7 @@ function agregarAlCarrito(producto) {
 // --------------------
 function mostrarCarrito() {
   const carritoProductos = document.getElementById("carrito-productos");
+  if (!carritoProductos) return;
   carritoProductos.innerHTML = "";
 
   carrito.forEach((producto) => {
@@ -70,39 +109,98 @@ function mostrarCarrito() {
         <input type="number"
           class="form-control cantidad"
           value="${cantidadInicial}"
-          min="1" max="20"
+          min="1" max="${MAX_COPIAS}"
         >
+        
 
         <div class="precio-total mt-1">
           Total: ${(producto.precio * cantidadInicial).toFixed(2)} €
         </div>
       </div>
+
+      <div class="aviso-slot"></div>
     `;
 
     const input = divProducto.querySelector("input.cantidad");
     const totalLineaDiv = divProducto.querySelector(".precio-total");
 
-    input.addEventListener("input", () => {
-      let cantidad = parseInt(input.value, 10);
-      if (Number.isNaN(cantidad)) cantidad = 1;
-      cantidad = Math.max(1, Math.min(20, cantidad));
-      input.value = cantidad;
+    // --- Spinner ↑ con ratón (zona derecha + mitad superior) ---
+    function detectarClickSpinnerSubir(e) {
+      const rect = input.getBoundingClientRect();
 
-      // Actualiza el objeto
+      // zona derecha del input (spinner)
+      const clickEnZonaSpinner = e.clientX > rect.right - 30;
+      if (!clickEnZonaSpinner) return;
+
+      // mitad superior = subir
+      const clickEnParteSuperior = e.clientY < (rect.top + rect.height / 2);
+      if (!clickEnParteSuperior) return;
+
+      const actual = parseInt(input.value, 10);
+      if (Number.isFinite(actual) && actual >= MAX_COPIAS) {
+        e.preventDefault();
+        producto._avisarMax = true;
+        mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
+      }
+    }
+    input.addEventListener("pointerdown", detectarClickSpinnerSubir);
+
+    // --- Escribir/pegar/cambiar ---
+    function actualizarCantidadDesdeInput() {
+      const valorEscrito = parseInt(input.value, 10);
+      const intentoPasarMax = Number.isFinite(valorEscrito) && valorEscrito > MAX_COPIAS;
+
+      let cantidad = valorEscrito;
+      if (Number.isNaN(cantidad)) cantidad = 1;
+
+      cantidad = Math.max(1, Math.min(MAX_COPIAS, cantidad));
+
+      if (intentoPasarMax) {
+        producto._avisarMax = true;
+        mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
+      }
+
+      input.value = cantidad;
       producto.cantidad = cantidad;
 
-      // Actualiza total de esa línea
       totalLineaDiv.textContent = `Total: ${(producto.precio * cantidad).toFixed(2)} €`;
-
-      // Actualiza total del carrito
       actualizarTotalCarrito();
+    }
+
+    input.addEventListener("input", actualizarCantidadDesdeInput);
+    input.addEventListener("change", actualizarCantidadDesdeInput);
+
+    // --- Flecha ↑ del teclado cuando ya está en MAX ---
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp") {
+        const actual = parseInt(input.value, 10);
+        if (Number.isFinite(actual) && actual >= MAX_COPIAS) {
+          e.preventDefault();
+
+          input.value = MAX_COPIAS;
+          producto.cantidad = MAX_COPIAS;
+
+          totalLineaDiv.textContent = `Total: ${(producto.precio * MAX_COPIAS).toFixed(2)} €`;
+          actualizarTotalCarrito();
+
+          producto._avisarMax = true;
+          mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
+        }
+      }
     });
 
     carritoProductos.appendChild(divProducto);
+
+    // --- Mostrar aviso si viene marcado (por botón añadir / por intentos) ---
+    if (producto._avisarMax) {
+      mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
+      delete producto._avisarMax;
+    }
   });
 
   actualizarTotalCarrito();
 }
+
 
 // --------------------
 // CLICK AÑADIR AL CARRITO
