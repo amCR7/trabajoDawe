@@ -33,7 +33,7 @@ function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
   msg.className = "aviso-max-copias";
   msg.textContent = texto;
 
-  // Estilo inline para que siempre se vea (no depende del CSS)
+  // Estilo inline para que siempre se vea
   msg.style.background = "#f8d7da";
   msg.style.border = "1px solid #f5c2c7";
   msg.style.color = "#842029";
@@ -52,14 +52,31 @@ function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
 // TOTAL CARRITO
 // --------------------
 function actualizarTotalCarrito() {
+  const carritoTotal = document.getElementById("carrito-total");
+  if (!carritoTotal) return;
+
+  if (carrito.length === 0) {
+    carritoTotal.innerHTML = "";
+    return;
+  }
+
   const totalCarrito = carrito.reduce((sum, p) => {
     const cant = p.cantidad ?? 1;
     return sum + (p.precio * cant);
   }, 0);
 
-  const carritoTotal = document.getElementById("carrito-total");
-  if (!carritoTotal) return;
   carritoTotal.innerHTML = `<h5>Total: ${totalCarrito.toFixed(2)} €</h5>`;
+}
+
+// --------------------
+// BOTÓN "AÑADIR" del catálogo: activar/desactivar según cantidad
+// --------------------
+function actualizarBotonAddCatalogo(idProducto, deshabilitar) {
+  const cardOriginal = document.querySelector(`.card[data-pid="${idProducto}"]`);
+  if (!cardOriginal) return;
+  const btn = cardOriginal.querySelector(".btn-add-carrito");
+  if (!btn) return;
+  btn.disabled = !!deshabilitar;
 }
 
 // --------------------
@@ -83,6 +100,9 @@ function agregarAlCarrito(producto) {
     carrito.push(producto);
   }
 
+  // Si llega a 20 por añadir, desactivar botón del catálogo
+  actualizarBotonAddCatalogo(producto.id, (carrito.find(p => p.id === producto.id)?.cantidad ?? 0) >= MAX_COPIAS);
+
   mostrarCarrito();
 }
 
@@ -98,7 +118,7 @@ function mostrarCarrito() {
     const cantidadInicial = producto.cantidad ?? 1;
 
     const divProducto = document.createElement("div");
-    divProducto.className = "d-flex align-items-center mb-3";
+    divProducto.className = "d-flex align-items-start mb-3";
 
     divProducto.innerHTML = `
       <img src="${producto.imagen}" alt="${producto.nombre}" class="img-fluid" style="width: 50px; height: 50px; margin-right: 10px;">
@@ -109,30 +129,24 @@ function mostrarCarrito() {
         <input type="number"
           class="form-control cantidad"
           value="${cantidadInicial}"
-          min="1" max="${MAX_COPIAS}"
+          min="0" max="${MAX_COPIAS}"
         >
-        
-
+        <div class="aviso-slot"></div>
         <div class="precio-total mt-1">
           Total: ${(producto.precio * cantidadInicial).toFixed(2)} €
         </div>
       </div>
-
-      <div class="aviso-slot"></div>
     `;
 
     const input = divProducto.querySelector("input.cantidad");
     const totalLineaDiv = divProducto.querySelector(".precio-total");
 
-    // --- Spinner ↑ con ratón (zona derecha + mitad superior) ---
     function detectarClickSpinnerSubir(e) {
       const rect = input.getBoundingClientRect();
 
-      // zona derecha del input (spinner)
       const clickEnZonaSpinner = e.clientX > rect.right - 30;
       if (!clickEnZonaSpinner) return;
 
-      // mitad superior = subir
       const clickEnParteSuperior = e.clientY < (rect.top + rect.height / 2);
       if (!clickEnParteSuperior) return;
 
@@ -145,15 +159,47 @@ function mostrarCarrito() {
     }
     input.addEventListener("pointerdown", detectarClickSpinnerSubir);
 
-    // --- Escribir/pegar/cambiar ---
+    //Si está en 1, borrar
+    function detectarClickSpinnerBajar(e) {
+      const rect = input.getBoundingClientRect();
+
+      const clickEnZonaSpinner = e.clientX > rect.right - 30;
+      if (!clickEnZonaSpinner) return;
+
+      const clickEnParteInferior = e.clientY >= (rect.top + rect.height / 2);
+      if (!clickEnParteInferior) return;
+
+      const actual = parseInt(input.value, 10);
+      if (Number.isFinite(actual) && actual === 1) {
+        e.preventDefault();
+        carrito = carrito.filter(p => p.id !== producto.id);
+
+        //Al borrar, reactivar botón del catálogo
+        actualizarBotonAddCatalogo(producto.id, false);
+
+        mostrarCarrito();
+      }
+    }
+    input.addEventListener("pointerdown", detectarClickSpinnerBajar);
+
     function actualizarCantidadDesdeInput() {
       const valorEscrito = parseInt(input.value, 10);
       const intentoPasarMax = Number.isFinite(valorEscrito) && valorEscrito > MAX_COPIAS;
 
       let cantidad = valorEscrito;
-      if (Number.isNaN(cantidad)) cantidad = 1;
+      if (Number.isNaN(cantidad)) cantidad = 0;
 
-      cantidad = Math.max(1, Math.min(MAX_COPIAS, cantidad));
+      if (cantidad <= 0) {
+        carrito = carrito.filter(p => p.id !== producto.id);
+
+        //Al borrar, reactivar botón del catálogo
+        actualizarBotonAddCatalogo(producto.id, false);
+
+        mostrarCarrito();
+        return;
+      }
+
+      cantidad = Math.min(MAX_COPIAS, cantidad);
 
       if (intentoPasarMax) {
         producto._avisarMax = true;
@@ -163,15 +209,17 @@ function mostrarCarrito() {
       input.value = cantidad;
       producto.cantidad = cantidad;
 
+      //desactivar/activar botón del catálogo según cantidad
+      actualizarBotonAddCatalogo(producto.id, cantidad >= MAX_COPIAS);
+
       totalLineaDiv.textContent = `Total: ${(producto.precio * cantidad).toFixed(2)} €`;
       actualizarTotalCarrito();
     }
 
     input.addEventListener("input", actualizarCantidadDesdeInput);
     input.addEventListener("change", actualizarCantidadDesdeInput);
-
-    // --- Flecha ↑ del teclado cuando ya está en MAX ---
     input.addEventListener("keydown", (e) => {
+      // Flecha arriba cuando ya está en MAX
       if (e.key === "ArrowUp") {
         const actual = parseInt(input.value, 10);
         if (Number.isFinite(actual) && actual >= MAX_COPIAS) {
@@ -180,6 +228,9 @@ function mostrarCarrito() {
           input.value = MAX_COPIAS;
           producto.cantidad = MAX_COPIAS;
 
+          // Desactivar botón del catálogo automáticamente al llegar a 20
+          actualizarBotonAddCatalogo(producto.id, true);
+
           totalLineaDiv.textContent = `Total: ${(producto.precio * MAX_COPIAS).toFixed(2)} €`;
           actualizarTotalCarrito();
 
@@ -187,11 +238,25 @@ function mostrarCarrito() {
           mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
         }
       }
+
+      // cuando esta en uno y le damos flecha abajo -> borrar y desaparecer
+      if (e.key === "ArrowDown") {
+        const actual = parseInt(input.value, 10);
+        if (Number.isFinite(actual) && actual === 1) {
+          e.preventDefault();
+          carrito = carrito.filter(p => p.id !== producto.id);
+
+          // Al borrar, reactivar botón del catálogo
+          actualizarBotonAddCatalogo(producto.id, false);
+
+          mostrarCarrito();
+        }
+      }
     });
 
     carritoProductos.appendChild(divProducto);
 
-    // --- Mostrar aviso si viene marcado (por botón añadir / por intentos) ---
+    // Mostrar mensaje maximo 20 copias
     if (producto._avisarMax) {
       mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
       delete producto._avisarMax;
@@ -200,7 +265,6 @@ function mostrarCarrito() {
 
   actualizarTotalCarrito();
 }
-
 
 // --------------------
 // CLICK AÑADIR AL CARRITO
@@ -230,8 +294,15 @@ document.addEventListener("click", (e) => {
   const producto = new Producto(idProducto, nombreProducto, precioProducto, descripcionProducto, imagenProducto);
 
   agregarAlCarrito(producto);
+
+  const existente = carrito.find(p => p.id === idProducto);
+  if (existente && existente.cantidad >= MAX_COPIAS) {
+    boton.disabled = true;
+  }
+
   mostrarMensajeCarrito(card, "Añadido al carrito ✅");
 });
+
 
 // --------------------
 // PAGINACIÓN
