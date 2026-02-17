@@ -107,7 +107,7 @@ export const productosTienda = [
         "FC 26",
         70,
         "Simulador de fútbol realista",
-        "imagenes/fifa.jpg",
+        "imagenes/FC26.png",
         "Nintendo Switch 2"
     ),
 
@@ -116,7 +116,7 @@ export const productosTienda = [
         "Call of Duty Modern Warfare",
         75,
         "Shooter en primera persona",
-        "imagenes/CallOf.jpg",
+        "imagenes/CallOf.png",
         "Xbox Series X"
     ),
 
