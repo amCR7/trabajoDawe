@@ -1,8 +1,10 @@
-class ProductoElectrodomestico extends Producto{
+import { Producto } from "./producto.js";
+
+export class ProductoElectrodomestico extends Producto{
     #garantia;
 
     constructor(id, nombre, precio, descripcion, imagen, garantia){
-        super(id, nombre, percio, descripcion, imagen);
+        super(id, nombre, precio, descripcion, imagen);
         this.#garantia = garantia;
     }
 
@@ -15,7 +17,7 @@ class ProductoElectrodomestico extends Producto{
     }
 }
 
-class ProductoSmartphone extends Producto{
+export class ProductoSmartphone extends Producto{
     #sistemaOperativo;
 
     constructor(id, nombre, precio, descripcion, imagen, sistemaOperativo){
@@ -32,7 +34,7 @@ class ProductoSmartphone extends Producto{
     }
 }
 
-class ProductoAudio extends Producto{
+export class ProductoAudio extends Producto{
     #tipoAudio;
 
     constructor(id, nombre, precio, descripcion, imagen, tipoAudio){
@@ -49,7 +51,7 @@ class ProductoAudio extends Producto{
     }
 }
 
-class ProductoAccesorio extends Producto{
+export class ProductoAccesorio extends Producto{
     #compatibilidad;
 
     constructor(id, nombre, precio, descripcion, imagen, compatibilidad){
@@ -66,7 +68,7 @@ class ProductoAccesorio extends Producto{
     }
 }
 
-class ProductoVideojuego extends Producto{
+export class ProductoVideojuego extends Producto{
     #generacion;
 
     constructor(id, nombre, precio, descripcion, imagen, generacion){

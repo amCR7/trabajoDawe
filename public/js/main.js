@@ -1,3 +1,5 @@
+import { productosTienda } from "./tienda.js";
+console.log("Productos cargados:", productosTienda);
 const PRODUCTOS_POR_PAGINA = 6;
 let paginaActual = 1;
 
@@ -40,23 +42,65 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Guardamos TODOS los productos (cada hijo es un <div class="col-...">)
-  const productos = Array.from(gridProductos.children);
+  const productos = productosTienda;
 
   function getTotalPaginas() {
     return Math.ceil(productos.length / PRODUCTOS_POR_PAGINA);
   }
 
+  function obtenerExtra(producto) {
+    if (producto.constructor.name === "ProductoElectrodomestico")
+      return `Garantía: ${producto.garantia} años`;
+  
+    if (producto.constructor.name === "ProductoSmartphone")
+      return `Sistema: ${producto.sistemaOperativo}`;
+  
+    if (producto.constructor.name === "ProductoAudio")
+      return `Tipo: ${producto.tipoAudio}`;
+  
+    if (producto.constructor.name === "ProductoAccesorio")
+      return `Compatibilidad: ${producto.compatibilidad}`;
+  
+    if (producto.constructor.name === "ProductoVideojuego")
+      return `Generación: ${producto.generacion}`;
+  
+    return "";
+  }
+  
+
   function pintarProductos() {
     gridProductos.innerHTML = "";
-
+  
     const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA;
     const fin = inicio + PRODUCTOS_POR_PAGINA;
-
+  
     const productosPagina = productos.slice(inicio, fin);
-    productosPagina.forEach((nodo) => gridProductos.appendChild(nodo));
-
+  
+    productosPagina.forEach((prod) => {
+      const col = document.createElement("div");
+      col.className = "col-12 col-sm-6 col-md-4";
+  
+      col.innerHTML = `
+        <div class="card h-100">
+          <button class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 btn-add-carrito">
+            🛒
+          </button>
+          <img src="${prod.imagen}" class="card-img-top" alt="${prod.nombre}">
+          <div class="card-body">
+            <h5 class="card-title">${prod.nombre}</h5>
+            <p class="card-text">${prod.descripcion}</p>
+            <div class="fw-bold">${prod.precio} €</div>
+            <small class="text-muted">${obtenerExtra(prod)}</small>
+          </div>
+        </div>
+      `;
+  
+      gridProductos.appendChild(col);
+    });
+  
     infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productos.length}`;
   }
+  
 
   function pintarBotones() {
     paginacionDiv.innerHTML = "";
