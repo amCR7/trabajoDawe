@@ -319,55 +319,50 @@ document.addEventListener("DOMContentLoaded", () => {
   const inputBuscador = document.getElementById("buscador");
   const tituloMain = document.getElementById("titulo-productos");
 
-
-
   if (!gridProductos || !infoPaginacion || !paginacionDiv) {
     console.error("Faltan elementos: #grid-productos, #info-paginacion o #paginacion");
     return;
   }
 
-  // Guardamos TODOS los productos (cada hijo es un <div class="col-...">)
+  // Guardamos TODOS los productos
   const productos = productosTienda;
   let productosFiltrados = [...productos];
 
   function getTotalPaginas() {
-    return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA); 
+    return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA);
   }
-
-
 
   function obtenerExtra(producto) {
     if (producto.constructor.name === "ProductoElectrodomestico")
       return `Garantía: ${producto.garantia} años`;
-  
+
     if (producto.constructor.name === "ProductoSmartphone")
       return `Sistema: ${producto.sistemaOperativo}`;
-  
+
     if (producto.constructor.name === "ProductoAudio")
       return `Tipo: ${producto.tipoAudio}`;
-  
+
     if (producto.constructor.name === "ProductoAccesorio")
       return `Compatibilidad: ${producto.compatibilidad}`;
-  
+
     if (producto.constructor.name === "ProductoVideojuego")
       return `Generación: ${producto.generacion}`;
-  
+
     return "";
   }
-  
 
   function pintarProductos() {
     gridProductos.innerHTML = "";
-  
+
     const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA;
     const fin = inicio + PRODUCTOS_POR_PAGINA;
-  
+
     const productosPagina = productosFiltrados.slice(inicio, fin);
-  
+
     productosPagina.forEach((prod) => {
       const col = document.createElement("div");
       col.className = "col-12 col-sm-6 col-md-4";
-  
+
       col.innerHTML = `
         <div class="card h-100">
           <button class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 btn-add-carrito">
@@ -382,14 +377,12 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
       `;
-  
+
       gridProductos.appendChild(col);
     });
-  
-    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productos.length}`;
-  }
 
-  
+    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productosFiltrados.length}`;
+  }
 
   function pintarBotones() {
     const total = getTotalPaginas();
@@ -406,7 +399,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const ul = document.createElement("ul");
     ul.className = "pagination m-0";
 
-    // Anterior (solo si no estamos en la primera)
     if (paginaActual > 1) {
       const liAnt = document.createElement("li");
       liAnt.className = "page-item";
@@ -419,7 +411,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ul.appendChild(liAnt);
     }
 
-    // Números
     for (let i = 1; i <= total; i++) {
       const li = document.createElement("li");
       li.className = `page-item ${i === paginaActual ? "active" : ""}`;
@@ -432,7 +423,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ul.appendChild(li);
     }
 
-    // Siguiente (solo si no estamos en la última)
     if (paginaActual < total) {
       const liSig = document.createElement("li");
       liSig.className = "page-item";
@@ -450,7 +440,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function actualizar() {
-    
     const total = getTotalPaginas();
     if (paginaActual > total) paginaActual = total || 1;
 
@@ -479,8 +468,6 @@ document.addEventListener("DOMContentLoaded", () => {
     paginaActual = 1;
     actualizar();
   }
-
-
 
   if (inputBuscador) {
     inputBuscador.addEventListener("input", aplicarBusqueda);
