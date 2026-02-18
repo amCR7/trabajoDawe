@@ -1,7 +1,7 @@
 import { Producto } from './producto.js';
 import { productosTienda } from "./tienda.js";
 
-// IMPORTAR LAS CLASES DE PRODUCTOS PERSONALIZABLES (FALTABAN)
+// IMPORTAR LAS CLASES DE PRODUCTOS PERSONALIZABLES
 import {
     ProductoElectrodomestico,
     ProductoSmartphone,
@@ -10,8 +10,27 @@ import {
     ProductoVideojuego
 } from "./productosPersonalizables.js";
 
+// IMPORTAR FUNCIONES DEL CARRITO DESDE TIENDA.JS
+import {
+    carrito,
+    MAX_COPIAS,
+    addToCarrito,
+    setCantidadCarrito,
+    getItemsCarrito,
+    getTotalCarrito,
+    getCantidadCarrito
+} from "./tienda.js";
+
+// ====================================================
+// CONSTANTES GLOBALES
+// ====================================================
+const PRODUCTOS_POR_PAGINA = 6;
+let paginaActual = 1;
+
+console.log("Productos cargados:", productosTienda);
+
 // --------------------
-// FORMULARIO AÑADIR PRODUCTO - COMPLETO (CORREGIDO)
+// FORMULARIO AÑADIR PRODUCTO
 // --------------------
 document.addEventListener("DOMContentLoaded", () => {
   // ====================================================
@@ -26,29 +45,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const gridProductos = document.getElementById("grid-productos");
   const inputBuscador = document.getElementById("buscador");
 
-  function limpiarArchivoSeleccionado() {
-    const dt = new DataTransfer(); // crea lista vacía
-    fileInput.files = dt.files;     // limpia archivos
-    fileInput.value = "";           // limpia visualmente
-    dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
-    dragDropArea.classList.remove("added", "preview", "drag-over");
-}
-
-// limpiar al cargar la página
-formulario.reset();
-limpiarArchivoSeleccionado();
-
-
-dragDropArea.innerHTML = `
-    <p class="m-0">Arrastra una imagen aquí o haz clic</p>
-`;  
-  
   if (!selectTipo || !campoExtraContainer || !formulario || !mensajeFormulario || !fileInput || !dragDropArea || !gridProductos) return;
 
   // ====================================================
   // 2. CONSTANTES
   // ====================================================
-  const IMAGEN_DEFECTO = "imagenes/default-product.png"; // Asegúrate de tener esta imagen
+  const IMAGEN_DEFECTO = "imagenes/default-product.png";
 
   // ====================================================
   // 3. CONFIGURACIÓN DE CAMPOS EXTRA POR TIPO
@@ -94,7 +96,21 @@ dragDropArea.innerHTML = `
   let campoExtraActual = null;
 
   // ====================================================
-  // 5. FUNCIÓN PARA ACTUALIZAR CAMPO EXTRA SEGÚN TIPO
+  // 5. FUNCIÓN PARA LIMPIAR ARCHIVO SELECCIONADO
+  // ====================================================
+  function limpiarArchivoSeleccionado() {
+    const dt = new DataTransfer();
+    fileInput.files = dt.files;
+    fileInput.value = "";
+    dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
+    dragDropArea.classList.remove("added", "preview", "drag-over");
+  }
+
+  // Limpiar al cargar
+  limpiarArchivoSeleccionado();
+
+  // ====================================================
+  // 6. FUNCIÓN PARA ACTUALIZAR CAMPO EXTRA SEGÚN TIPO
   // ====================================================
   function actualizarCampoExtra() {
     const tipoSeleccionado = selectTipo.value;
@@ -136,7 +152,7 @@ dragDropArea.innerHTML = `
   selectTipo.addEventListener("change", actualizarCampoExtra);
 
   // ====================================================
-  // 6. FUNCIONES PARA MENSAJES
+  // 7. FUNCIONES PARA MENSAJES
   // ====================================================
   function mostrarMensajeError(texto, duracion = 2000) {
     mensajeFormulario.innerHTML = `<div class="alert alert-danger py-1 px-2 mb-0">❌ ${texto}</div>`;
@@ -153,21 +169,17 @@ dragDropArea.innerHTML = `
   }
 
   // ====================================================
-  // 7. VALIDACIÓN DE ARCHIVOS
+  // 8. VALIDACIÓN DE ARCHIVOS
   // ====================================================
   function validarArchivo(file) {
     if (!file) return { valido: false, error: "No se ha seleccionado ningún archivo" };
     
-    // Obtener extensión y tipo MIME
     const extension = file.name.split('.').pop().toLowerCase();
     const tipoMIME = file.type.toLowerCase();
     
-    // Extensiones permitidas
     const extensionesPermitidas = ['jpg', 'jpeg', 'png'];
-    // Tipos MIME permitidos
     const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png'];
     
-    // Validar por extensión
     if (!extensionesPermitidas.includes(extension)) {
         return { 
             valido: false, 
@@ -175,7 +187,6 @@ dragDropArea.innerHTML = `
         };
     }
     
-    // Validar por tipo MIME
     if (!tiposPermitidos.includes(tipoMIME)) {
         return { 
             valido: false, 
@@ -184,20 +195,12 @@ dragDropArea.innerHTML = `
     }
     
     return { valido: true };
-}
+  }
 
-function limpiarArchivoSeleccionado() {
-  const dt = new DataTransfer();   // lista vacía real
-  fileInput.files = dt.files;      // reemplaza archivos
-  fileInput.value = "";            // limpia visualmente
-}
-
-
-
-
-// 9. DRAG & DROP CON VALIDACIONES (CORREGIDO - VERSIÓN DEFINITIVA)
-// ====================================================
-const dropHandler = (e) => {
+  // ====================================================
+  // 9. DRAG & DROP HANDLER
+  // ====================================================
+  const dropHandler = (e) => {
     e.preventDefault();
     e.stopPropagation();
     dragDropArea.classList.remove("drag-over");
@@ -207,8 +210,6 @@ const dropHandler = (e) => {
     if (files.length > 1) {
         mostrarMensajeError("Solo se permite subir un archivo");
         e.dataTransfer.clearData();
-        dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
-        dragDropArea.classList.remove("added", "preview");
         limpiarArchivoSeleccionado();
         return;
     }
@@ -216,25 +217,20 @@ const dropHandler = (e) => {
     const file = files[0];
     if (!file) return;
     
-    // Mostrar información del archivo para debug
     console.log("Archivo:", file.name, "Tipo:", file.type);
     
     const validacion = validarArchivo(file);
     if (!validacion.valido) {
         mostrarMensajeError(validacion.error);
         e.dataTransfer.clearData();
-        dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
-        dragDropArea.classList.remove("added", "preview");
         limpiarArchivoSeleccionado();
         return;
     }
     
-    // Asignar archivo
     const dt = new DataTransfer();
     dt.items.add(file);
     fileInput.files = dt.files;
 
-    
     const reader = new FileReader();
     reader.onload = function (e) {
         dragDropArea.innerHTML = "";
@@ -247,34 +243,29 @@ const dropHandler = (e) => {
         dragDropArea.classList.add("added", "preview");
     };
     reader.readAsDataURL(file);
-};
+  };
 
-// ====================================================
-// 10. EVENTO CHANGE DEL FILE INPUT (CORREGIDO)
-// ====================================================
-const changeHandler = function() {
+  // ====================================================
+  // 10. EVENTO CHANGE DEL FILE INPUT
+  // ====================================================
+  const changeHandler = function() {
     console.log("Files seleccionados:", this.files.length);
     
     if (this.files.length > 1) {
         mostrarMensajeError("Solo se permite subir un archivo");
         limpiarArchivoSeleccionado();
-        dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
-        dragDropArea.classList.remove("added", "preview");
         return;
     }
     
     const file = this.files[0];
     if (!file) return;
     
-    // Mostrar información del archivo para debug
     console.log("Archivo seleccionado:", file.name, "Tipo:", file.type, "Tamaño:", file.size);
     
     const validacion = validarArchivo(file);
     if (!validacion.valido) {
         mostrarMensajeError(validacion.error);
         limpiarArchivoSeleccionado();
-        dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
-        dragDropArea.classList.remove("added", "preview");
         return;
     }
     
@@ -292,43 +283,32 @@ const changeHandler = function() {
     reader.onerror = function() {
         mostrarMensajeError("Error al leer el archivo");
         limpiarArchivoSeleccionado();
-        dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
-        dragDropArea.classList.remove("added", "preview");
     };
     reader.readAsDataURL(file);
-};
+  };
 
-
-  fileInput.removeEventListener("change", fileInput._changeHandler);
   fileInput.addEventListener("change", changeHandler);
-  fileInput._changeHandler = changeHandler;
 
   // ====================================================
-// ACTIVAR DRAG & DROP CON NUESTRA VERSIÓN VALIDADA
-// ====================================================
+  // 11. ACTIVAR DRAG & DROP
+  // ====================================================
+  dragDropArea.addEventListener("click", () => {
+    fileInput.click();
+  });
 
-// Click abre el selector
-dragDropArea.addEventListener("click", () => {
-  fileInput.click();
-});
+  dragDropArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dragDropArea.classList.add("drag-over");
+  });
 
-// Permitir arrastrar encima
-dragDropArea.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  dragDropArea.classList.add("drag-over");
-});
+  dragDropArea.addEventListener("dragleave", () => {
+    dragDropArea.classList.remove("drag-over");
+  });
 
-// Quitar estilo cuando sale
-dragDropArea.addEventListener("dragleave", () => {
-  dragDropArea.classList.remove("drag-over");
-});
-
-// Cuando se suelta el archivo
-dragDropArea.addEventListener("drop", dropHandler);
-
+  dragDropArea.addEventListener("drop", dropHandler);
 
   // ====================================================
-  // 11. FUNCIÓN PARA RESETEAR DRAG & DROP
+  // 12. FUNCIÓN PARA RESETEAR DRAG & DROP
   // ====================================================
   function resetDragDrop() {
     dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
@@ -337,7 +317,7 @@ dragDropArea.addEventListener("drop", dropHandler);
   }
 
   // ====================================================
-  // 12. FUNCIÓN PARA CREAR INSTANCIA
+  // 13. FUNCIÓN PARA CREAR INSTANCIA
   // ====================================================
   function crearInstanciaProducto(tipo, nombre, precio, descripcion, imagen, valorExtra) {
     const nextId = productosTienda.length + 1;
@@ -400,7 +380,7 @@ dragDropArea.addEventListener("drop", dropHandler);
   }
 
   // ====================================================
-  // 13. FUNCIÓN PARA AÑADIR PRODUCTO Y ACTUALIZAR
+  // 14. FUNCIÓN PARA AÑADIR PRODUCTO Y ACTUALIZAR
   // ====================================================
   function añadirProductoATienda(nuevoProducto) {
     productosTienda.push(nuevoProducto);
@@ -413,12 +393,11 @@ dragDropArea.addEventListener("drop", dropHandler);
   }
 
   // ====================================================
-  // 14. EVENTO SUBMIT DEL FORMULARIO
+  // 15. EVENTO SUBMIT DEL FORMULARIO
   // ====================================================
   formulario.addEventListener("submit", (e) => {
     e.preventDefault();
     
-    // Validar tipo
     if (!selectTipo.value) {
       mostrarMensajeError("Debes seleccionar un tipo de producto");
       selectTipo.focus();
@@ -458,7 +437,6 @@ dragDropArea.addEventListener("drop", dropHandler);
       }
     }
     
-    // Procesar imagen
     let imagenSrc = IMAGEN_DEFECTO;
     if (fileInput.files.length > 0) {
       const file = fileInput.files[0];
@@ -489,19 +467,10 @@ dragDropArea.addEventListener("drop", dropHandler);
   });
 });
 
-console.log("Productos cargados:", productosTienda);
-
-// ====================================================
-// RESTO DEL CÓDIGO (CARRITO, PAGINACIÓN, ETC) - SIN CAMBIOS
-// ====================================================
-const PRODUCTOS_POR_PAGINA = 6;
-let paginaActual = 1;
-let carrito = [];
-const MAX_COPIAS = 20;
-
 // --------------------
-// CARRITO: mensaje 1-2s
+// FUNCIONES DEL CARRITO
 // --------------------
+
 function mostrarMensajeCarrito(card, texto) {
   const existente = card.querySelector(".mensaje-carrito");
   if (existente) existente.remove();
@@ -514,9 +483,6 @@ function mostrarMensajeCarrito(card, texto) {
   setTimeout(() => msg.remove(), 1500);
 }
 
-// --------------------
-// AVISO debajo del input del carrito
-// --------------------
 function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
   const slot = lineaProductoDiv.querySelector(".aviso-slot");
   if (!slot) return;
@@ -540,80 +506,55 @@ function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
   setTimeout(() => msg.remove(), 1500);
 }
 
-// --------------------
-// TOTAL CARRITO
-// --------------------
 function actualizarTotalCarrito() {
   const carritoTotal = document.getElementById("carrito-total");
   if (!carritoTotal) return;
 
-  if (carrito.length === 0) {
+  if (carrito.size === 0) {
     carritoTotal.innerHTML = "";
     return;
   }
 
-  const totalCarrito = carrito.reduce((sum, p) => {
-    const cant = p.cantidad ?? 1;
-    return sum + (p.precio * cant);
-  }, 0);
-
-  carritoTotal.innerHTML = `<h5>Total: ${totalCarrito.toFixed(2)} €</h5>`;
+  const total = getTotalCarrito();
+  carritoTotal.innerHTML = `<h5>Total: ${total.toFixed(2)} €</h5>`;
 }
 
-// --------------------
-// BOTÓN "AÑADIR" del catálogo: activar/desactivar según cantidad
-// --------------------
 function actualizarBotonAddCatalogo(idProducto, deshabilitar) {
-  const cardOriginal = document.querySelector(`.card[data-pid="${idProducto}"]`);
+  const idStr = String(idProducto);
+  const cardOriginal = document.querySelector(`.card[data-pid="${idStr}"]`);
   if (!cardOriginal) return;
+
   const btn = cardOriginal.querySelector(".btn-add-carrito");
   if (!btn) return;
+
   btn.disabled = !!deshabilitar;
 }
 
-// --------------------
-// AGREGAR AL CARRITO
-// --------------------
 function agregarAlCarrito(producto) {
-  const existente = carrito.find(p => p.id === producto.id);
-
-  if (existente) {
-    const actual = existente.cantidad ?? 1;
-
-    if (actual >= MAX_COPIAS) {
-      existente._avisarMax = true;
-      existente.cantidad = MAX_COPIAS;
-    } else {
-      existente.cantidad = Math.min(MAX_COPIAS, actual + 1);
-    }
-  } else {
-    producto.cantidad = 1;
-    carrito.push(producto);
-  }
-
-  actualizarBotonAddCatalogo(producto.id, (carrito.find(p => p.id === producto.id)?.cantidad ?? 0) >= MAX_COPIAS);
+  const res = addToCarrito(producto);
+  const cantidad = getCantidadCarrito(producto.id);
+  actualizarBotonAddCatalogo(producto.id, cantidad >= MAX_COPIAS);
   mostrarCarrito();
 }
 
-// --------------------
-// MOSTRAR CARRITO
-// --------------------
 function mostrarCarrito() {
   const carritoProductos = document.getElementById("carrito-productos");
   if (!carritoProductos) return;
-  carritoProductos.innerHTML = "";
 
-  carrito.forEach((producto) => {
-    const cantidadInicial = producto.cantidad ?? 1;
+  carritoProductos.innerHTML = "";
+  const items = getItemsCarrito();
+
+  items.forEach((item) => {
+    const cantidadInicial = item.cantidad ?? 1;
 
     const divProducto = document.createElement("div");
     divProducto.className = "d-flex align-items-start mb-3";
 
     divProducto.innerHTML = `
-      <img src="${producto.imagen}" alt="${producto.nombre}" class="img-fluid" style="width: 50px; height: 50px; margin-right: 10px;">
+      <img src="${item.imagen}" alt="${item.nombre}" class="img-fluid" style="width: 50px; height: 50px; margin-right: 10px;">
       <div class="flex-fill">
-        <div><strong>${producto.nombre}</strong></div>
-        <div>${producto.precio} €</div>
+        <div><strong>${item.nombre}</strong></div>
+        <div>${item.precio} €</div>
         <input type="number"
           class="form-control cantidad"
           value="${cantidadInicial}"
@@ -621,7 +562,7 @@ function mostrarCarrito() {
         >
         <div class="aviso-slot"></div>
         <div class="precio-total mt-1">
-          Total: ${(producto.precio * cantidadInicial).toFixed(2)} €
+          Total: ${(item.precio * cantidadInicial).toFixed(2)} €
         </div>
       </div>
     `;
@@ -640,7 +581,6 @@ function mostrarCarrito() {
       const actual = parseInt(input.value, 10);
       if (Number.isFinite(actual) && actual >= MAX_COPIAS) {
         e.preventDefault();
-        producto._avisarMax = true;
         mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
       }
     }
@@ -657,8 +597,8 @@ function mostrarCarrito() {
       const actual = parseInt(input.value, 10);
       if (Number.isFinite(actual) && actual === 1) {
         e.preventDefault();
-        carrito = carrito.filter(p => p.id !== producto.id);
-        actualizarBotonAddCatalogo(producto.id, false);
+        setCantidadCarrito(item.id, 0);
+        actualizarBotonAddCatalogo(item.id, false);
         mostrarCarrito();
       }
     }
@@ -666,45 +606,34 @@ function mostrarCarrito() {
 
     function actualizarCantidadDesdeInput() {
       const valorEscrito = parseInt(input.value, 10);
-      const intentoPasarMax = Number.isFinite(valorEscrito) && valorEscrito > MAX_COPIAS;
+      if (Number.isNaN(valorEscrito)) return;
 
-      let cantidad = valorEscrito;
-      if (Number.isNaN(cantidad)) cantidad = 0;
+      const res = setCantidadCarrito(item.id, valorEscrito);
 
-      if (cantidad <= 0) {
-        carrito = carrito.filter(p => p.id !== producto.id);
-        actualizarBotonAddCatalogo(producto.id, false);
+      if (res.action === "deleted") {
+        actualizarBotonAddCatalogo(item.id, false);
         mostrarCarrito();
         return;
       }
 
-      cantidad = Math.min(MAX_COPIAS, cantidad);
-
-      if (intentoPasarMax) {
-        producto._avisarMax = true;
+      if (res.action === "max_clamped") {
         mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
       }
 
-      input.value = cantidad;
-      producto.cantidad = cantidad;
-      actualizarBotonAddCatalogo(producto.id, cantidad >= MAX_COPIAS);
-      totalLineaDiv.textContent = `Total: ${(producto.precio * cantidad).toFixed(2)} €`;
+      input.value = res.cantidad;
+      totalLineaDiv.textContent = `Total: ${(item.precio * res.cantidad).toFixed(2)} €`;
+      actualizarBotonAddCatalogo(item.id, res.cantidad >= MAX_COPIAS);
       actualizarTotalCarrito();
     }
 
     input.addEventListener("input", actualizarCantidadDesdeInput);
     input.addEventListener("change", actualizarCantidadDesdeInput);
+
     input.addEventListener("keydown", (e) => {
       if (e.key === "ArrowUp") {
         const actual = parseInt(input.value, 10);
         if (Number.isFinite(actual) && actual >= MAX_COPIAS) {
           e.preventDefault();
-          input.value = MAX_COPIAS;
-          producto.cantidad = MAX_COPIAS;
-          actualizarBotonAddCatalogo(producto.id, true);
-          totalLineaDiv.textContent = `Total: ${(producto.precio * MAX_COPIAS).toFixed(2)} €`;
-          actualizarTotalCarrito();
-          producto._avisarMax = true;
           mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
         }
       }
@@ -713,19 +642,14 @@ function mostrarCarrito() {
         const actual = parseInt(input.value, 10);
         if (Number.isFinite(actual) && actual === 1) {
           e.preventDefault();
-          carrito = carrito.filter(p => p.id !== producto.id);
-          actualizarBotonAddCatalogo(producto.id, false);
+          setCantidadCarrito(item.id, 0);
+          actualizarBotonAddCatalogo(item.id, false);
           mostrarCarrito();
         }
       }
     });
 
     carritoProductos.appendChild(divProducto);
-
-    if (producto._avisarMax) {
-      mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
-      delete producto._avisarMax;
-    }
   });
 
   actualizarTotalCarrito();
@@ -741,25 +665,34 @@ document.addEventListener("click", (e) => {
   const card = boton.closest(".card");
   if (!card) return;
 
-  const nombreProducto = card.querySelector(".card-title").textContent;
-  const precioProducto = parseFloat(card.querySelector(".fw-bold").textContent.replace(" €", ""));
+  const nombreProducto = card.querySelector(".card-title")?.textContent?.trim() || "";
+  const precioProducto = parseFloat(
+    (card.querySelector(".fw-bold")?.textContent || "0").replace(" €", "")
+  );
   const descripcionProducto = card.querySelector(".card-text")?.textContent || "Descripción no disponible";
-  const imagenProducto = card.querySelector(".card-img-top").src;
+  const imagenProducto = card.querySelector(".card-img-top")?.src || "";
 
-  if (!card.dataset.pid) {
-    card.dataset.pid = nombreProducto
+  const encontrado = productosTienda.find(p =>
+    String(p.nombre).trim() === nombreProducto && Number(p.precio) === Number(precioProducto)
+  );
+
+  let idProducto = encontrado ? encontrado.id : null;
+
+  if (idProducto === null) {
+    idProducto = nombreProducto
       .toLowerCase()
       .trim()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9\-]/g, "");
   }
-  const idProducto = card.dataset.pid;
+
+  card.dataset.pid = String(idProducto);
 
   const producto = new Producto(idProducto, nombreProducto, precioProducto, descripcionProducto, imagenProducto);
   agregarAlCarrito(producto);
 
-  const existente = carrito.find(p => p.id === idProducto);
-  if (existente && existente.cantidad >= MAX_COPIAS) {
+  const cant = getCantidadCarrito(producto.id);
+  if (cant >= MAX_COPIAS) {
     boton.disabled = true;
   }
 
@@ -785,7 +718,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let productosFiltrados = [...productos];
 
   function getTotalPaginas() {
-    return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA); 
+    return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA);
   }
 
   function obtenerExtra(producto) {
@@ -804,15 +737,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function pintarProductos() {
     gridProductos.innerHTML = "";
-  
+
     const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA;
     const fin = inicio + PRODUCTOS_POR_PAGINA;
     const productosPagina = productosFiltrados.slice(inicio, fin);
-  
+
     productosPagina.forEach((prod) => {
       const col = document.createElement("div");
       col.className = "col-12 col-sm-6 col-md-4";
-  
+
       col.innerHTML = `
         <div class="card h-100">
           <button class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 btn-add-carrito">
@@ -827,11 +760,11 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
       `;
-  
+
       gridProductos.appendChild(col);
     });
-  
-    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productos.length}`;
+
+    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productosFiltrados.length}`;
   }
 
   function pintarBotones() {
@@ -923,7 +856,6 @@ document.addEventListener("DOMContentLoaded", () => {
     actualizar();
   }
 });
-
 
 // --------------------
 // DESCRIPCIÓN EXTENDIDA DEL PRODUCTO 
