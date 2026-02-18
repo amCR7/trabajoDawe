@@ -42,7 +42,7 @@
         <aside id="panel-lateral" class="p-3 border rounded" style="width:300px;">
             <h2 class="h5 mb-3">Añadir producto</h2>
 
-            <form id="formulario-producto">
+            <form id="formulario-producto" autocomplete="off">
 
                 <div class="mb-3">
                     <label for="tipo-producto" class="form-label">Tipo de producto</label>
@@ -76,7 +76,7 @@
 
                 <div class="mb-3">
                     <label for="archivo-imagen" class="form-label">Imagen</label>
-                    <input type="file" id="archivo-imagen" class="form-control">
+                    <input type="file" id="archivo-imagen" class="form-control" multiple="false">
                 </div>
 
                 <div id="drag-drop-area" class="drag-drop-area mb-3">
