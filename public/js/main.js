@@ -332,10 +332,11 @@ document.addEventListener("click", (e) => {
 
   if (mostrandoVistaFavoritos && !producto.favorito) {
     // eliminar el card del DOM sin refrescar todo
-    card.remove();
+    card.closest(".col-12").remove();
 
     // actualizar productosFiltrados para mantener consistencia
     productosFiltrados = productosFiltrados.filter(p => p.favorito);
+    actualizar();
 
     // opcional: actualizar la paginación y el texto
     const infoPaginacion = document.getElementById("info-paginacion");
