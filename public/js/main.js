@@ -5,6 +5,9 @@ console.log("Productos cargados:", productosTienda);
 const PRODUCTOS_POR_PAGINA = 6;
 let paginaActual = 1;
 let carrito = [];
+let favoritos = [];
+let productosFiltrados = [...productosTienda]; // GLOBAL
+let mostrandoVistaFavoritos = false; // GLOBAL
 const MAX_COPIAS = 20;
 
 // --------------------
@@ -284,13 +287,13 @@ document.addEventListener("click", (e) => {
   const imagenProducto = card.querySelector(".card-img-top").src;
 
   //id no aleatorio
-  if (!card.dataset.pid) {
-    card.dataset.pid = nombreProducto
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9\-]/g, "");
-  }
+  //if (!card.dataset.pid) {
+  //  card.dataset.pid = nombreProducto
+    //  .toLowerCase()
+      //.trim()
+      //.replace(/\s+/g, "-")
+      //.replace(/[^a-z0-9\-]/g, "");
+ // }
   const idProducto = card.dataset.pid;
 
   const producto = new Producto(idProducto, nombreProducto, precioProducto, descripcionProducto, imagenProducto);
@@ -305,6 +308,47 @@ document.addEventListener("click", (e) => {
   mostrarMensajeCarrito(card, "Añadido al carrito ✅");
 });
 
+//CAPTURAR FAVOS
+document.addEventListener("click", (e) => {
+  const botonFav = e.target.closest(".btn-favorito"); // detecta clicks en cualquier botón de favorito
+  if (!botonFav) return;
+
+  const card = botonFav.closest(".card");
+  if (!card) return;
+
+  const idProducto = Number(card.dataset.pid);
+
+  // buscamos el producto en tu array global `productosTienda` o `productos` dentro de DOMContentLoaded
+  const producto = productosTienda.find(p => p.id === idProducto);
+  if (!producto) return;
+
+  // alternamos su estado de favorito
+  producto.favorito = !producto.favorito;
+
+  favoritos = productosTienda.filter(p => p.favorito);
+
+  // cambiamos el icono del botón
+  botonFav.textContent = producto.favorito ? "❤️" : "🤍";
+
+  if (mostrandoVistaFavoritos && !producto.favorito) {
+    // eliminar el card del DOM sin refrescar todo
+    card.remove();
+
+    // actualizar productosFiltrados para mantener consistencia
+    productosFiltrados = productosFiltrados.filter(p => p.favorito);
+
+    // opcional: actualizar la paginación y el texto
+    const infoPaginacion = document.getElementById("info-paginacion");
+    if (infoPaginacion) {
+      infoPaginacion.textContent = `Mostrando ${productosFiltrados.length} de ${productosTienda.length}`;
+    }
+
+    // si la paginación estaba activa, volver a pintar botones
+    const paginacionDiv = document.getElementById("paginacion");
+    if (paginacionDiv) pintarBotones();
+  }
+});
+
 
 // --------------------
 // PAGINACIÓN
@@ -315,6 +359,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const paginacionDiv = document.getElementById("paginacion");
   const inputBuscador = document.getElementById("buscador");
   const tituloMain = document.getElementById("titulo-productos");
+  const btnFavoritos = document.getElementById("btn-favoritos");
+  const btnInicio = document.getElementById("btn-inicio");
 
 
 
@@ -325,7 +371,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Guardamos TODOS los productos (cada hijo es un <div class="col-...">)
   const productos = productosTienda;
-  let productosFiltrados = [...productos];
+  //let productosFiltrados = [...productos];
 
   function getTotalPaginas() {
     return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA); 
@@ -366,9 +412,12 @@ document.addEventListener("DOMContentLoaded", () => {
       col.className = "col-12 col-sm-6 col-md-4";
   
       col.innerHTML = `
-        <div class="card h-100">
+        <div class="card h-100" data-pid="${prod.id}">
           <button class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 btn-add-carrito">
             🛒
+          </button>
+          <button class="btn btn-danger rounded-circle position-absolute top-0 start-0 m-2 btn-favorito">
+            ${prod.favorito ? "❤️" : "🤍"}
           </button>
           <img src="${prod.imagen}" class="card-img-top" alt="${prod.nombre}">
           <div class="card-body">
@@ -484,6 +533,26 @@ document.addEventListener("DOMContentLoaded", () => {
     aplicarBusqueda();
   } else {
     actualizar();
+  }
+
+  if (btnFavoritos) {
+    btnFavoritos.addEventListener("click", (e) => {
+      e.preventDefault();
+      mostrandoVistaFavoritos = true;
+      productosFiltrados = productos.filter(p => p.favorito);
+      paginaActual = 1;
+      actualizar();
+    });
+  }
+
+  if (btnInicio) {
+    btnInicio.addEventListener("click", (e) => {
+      e.preventDefault();
+      mostrandoVistaFavoritos = false;
+      productosFiltrados = [...productos];
+      paginaActual = 1;
+      actualizar();
+    });
   }
 });
 

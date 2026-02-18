@@ -4,6 +4,7 @@ export class Producto{
     #precio;
     #descripcion;
     #imagen;
+    #favorito = false;
 
     constructor(id, nombre, precio, descripcion, imagen){
         this.#id = id;
@@ -53,5 +54,13 @@ export class Producto{
 
     set imagen(nuevaImagen){
         this.#imagen = nuevaImagen;
+    }
+
+    get favorito(){
+        return this.#favorito;
+    }
+
+    set favorito(nuevoFavorito){
+        this.#favorito = nuevoFavorito;
     }
 }
