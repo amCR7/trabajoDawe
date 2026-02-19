@@ -696,47 +696,45 @@ document.addEventListener("click", (e) => {
   mostrarMensajeCarrito(card, "Añadido al carrito ✅");
 });
 
-//CAPTURAR FAVOS
+// --------------------
+// CAPTURAR FAVOS
+// --------------------
 document.addEventListener("click", (e) => {
-  const botonFav = e.target.closest(".btn-favorito"); // detecta clicks en cualquier botón de favorito
+  const botonFav = e.target.closest(".btn-favorito");
   if (!botonFav) return;
 
   const card = botonFav.closest(".card");
   if (!card) return;
 
   const idProducto = Number(card.dataset.pid);
-
-  // buscamos el producto en tu array global `productosTienda` o `productos` dentro de DOMContentLoaded
   const producto = productosTienda.find(p => p.id === idProducto);
   if (!producto) return;
 
-  // alternamos su estado de favorito
+  // alternar favorito
   producto.favorito = !producto.favorito;
 
-  favoritos = productosTienda.filter(p => p.favorito);
-
-  // cambiamos el icono del botón
+  // actualizar icono inmediatamente
   botonFav.textContent = producto.favorito ? "❤️" : "🤍";
 
-  if (mostrandoVistaFavoritos && !producto.favorito) {
-    // eliminar el card del DOM sin refrescar todo
-    card.closest(".col-12").remove();
-
-    // actualizar productosFiltrados para mantener consistencia
-    productosFiltrados = productosFiltrados.filter(p => p.favorito);
-    actualizar();
-
-    // opcional: actualizar la paginación y el texto
-    const infoPaginacion = document.getElementById("info-paginacion");
-    if (infoPaginacion) {
-      infoPaginacion.textContent = `Mostrando ${productosFiltrados.length} de ${productosTienda.length}`;
-    }
-
-    // si la paginación estaba activa, volver a pintar botones
-    const paginacionDiv = document.getElementById("paginacion");
-    if (paginacionDiv) pintarBotones();
+  // recalcular lista según la vista actual
+  if (mostrandoVistaFavoritos) {
+    productosFiltrados = productosTienda.filter(p => p.favorito);
+  } else {
+    productosFiltrados = [...productosTienda];
   }
+
+  // ajustar página actual si la eliminación reduce total de páginas
+  const totalPaginas = window.miApp.getTotalPaginas();
+  if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
+
+  // repintar productos y botones sin cambiar la página actual
+  window.miApp.pintarProductos();
+  window.miApp.pintarBotones();
 });
+
+
+
+
 
 
 // --------------------
@@ -895,6 +893,13 @@ document.addEventListener("DOMContentLoaded", () => {
     paginaActual = 1;
     actualizar();
   }
+
+  window.miApp = {
+    pintarProductos,
+    pintarBotones,
+    actualizar,
+    getTotalPaginas
+  };
 
   if (inputBuscador) {
     inputBuscador.addEventListener("input", aplicarBusqueda);
