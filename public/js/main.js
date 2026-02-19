@@ -1,18 +1,479 @@
 import { Producto } from './producto.js';
-
 import { productosTienda } from "./tienda.js";
-console.log("Productos cargados:", productosTienda);
+
+// IMPORTAR LAS CLASES DE PRODUCTOS PERSONALIZABLES
+import {
+    ProductoElectrodomestico,
+    ProductoSmartphone,
+    ProductoAudio,
+    ProductoAccesorio,
+    ProductoVideojuego
+} from "./productosPersonalizables.js";
+
+// IMPORTAR FUNCIONES DEL CARRITO DESDE TIENDA.JS
+import {
+    carrito,
+    MAX_COPIAS,
+    addToCarrito,
+    setCantidadCarrito,
+    getItemsCarrito,
+    getTotalCarrito,
+    getCantidadCarrito
+} from "./tienda.js";
+
+// ====================================================
+// CONSTANTES GLOBALES
+// ====================================================
 const PRODUCTOS_POR_PAGINA = 6;
 let paginaActual = 1;
-let carrito = [];
+//let carrito = [];
 let favoritos = [];
 let productosFiltrados = [...productosTienda]; // GLOBAL
 let mostrandoVistaFavoritos = false; // GLOBAL
-const MAX_COPIAS = 20;
+//const MAX_COPIAS = 20;
 
 // --------------------
-// CARRITO: mensaje 1-2s
+// FORMULARIO AÑADIR PRODUCTO
 // --------------------
+document.addEventListener("DOMContentLoaded", () => {
+  // ====================================================
+  // 1. OBTENER REFERENCIAS A ELEMENTOS DEL DOM
+  // ====================================================
+  const selectTipo = document.getElementById("tipo-producto");
+  const campoExtraContainer = document.getElementById("campo-extra-container");
+  const formulario = document.getElementById("formulario-producto");
+  const mensajeFormulario = document.getElementById("mensaje-formulario");
+  const fileInput = document.getElementById("archivo-imagen");
+  const dragDropArea = document.getElementById("drag-drop-area");
+  const gridProductos = document.getElementById("grid-productos");
+  const inputBuscador = document.getElementById("buscador");
+
+  if (!selectTipo || !campoExtraContainer || !formulario || !mensajeFormulario || !fileInput || !dragDropArea || !gridProductos) return;
+
+  // ====================================================
+  // 2. CONSTANTES
+  // ====================================================
+  const IMAGEN_DEFECTO = "imagenes/default-product.png";
+
+  // ====================================================
+  // 3. CONFIGURACIÓN DE CAMPOS EXTRA POR TIPO
+  // ====================================================
+  const camposExtra = {
+    televisor: {
+      label: "Años de garantía",
+      type: "number",
+      placeholder: "Ej: 2",
+      required: true,
+      min: 1,
+      step: 1
+    },
+    smartphone: {
+      label: "Sistema Operativo",
+      type: "text",
+      placeholder: "Ej: Android 14, iOS 17",
+      required: true
+    },
+    audio: {
+      label: "Tipo de audio",
+      type: "text",
+      placeholder: "Ej: Altavoz portátil, Auriculares",
+      required: true
+    },
+    accesorio: {
+      label: "Compatibilidad",
+      type: "text",
+      placeholder: "Ej: USB-C, Universal, PS5",
+      required: true
+    },
+    videojuego: {
+      label: "Plataforma/Generación",
+      type: "text",
+      placeholder: "Ej: PS5, Xbox Series X, Nintendo Switch",
+      required: true
+    }
+  };
+
+  // ====================================================
+  // 4. VARIABLES GLOBALES DEL FORMULARIO
+  // ====================================================
+  let campoExtraActual = null;
+
+  // ====================================================
+  // 5. FUNCIÓN PARA LIMPIAR ARCHIVO SELECCIONADO
+  // ====================================================
+  function limpiarArchivoSeleccionado() {
+    const dt = new DataTransfer();
+    fileInput.files = dt.files;
+    fileInput.value = "";
+    dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
+    dragDropArea.classList.remove("added", "preview", "drag-over");
+  }
+
+  // Limpiar al cargar
+  limpiarArchivoSeleccionado();
+
+  // ====================================================
+  // 6. FUNCIÓN PARA ACTUALIZAR CAMPO EXTRA SEGÚN TIPO
+  // ====================================================
+  function actualizarCampoExtra() {
+    const tipoSeleccionado = selectTipo.value;
+    
+    campoExtraContainer.innerHTML = "";
+    campoExtraActual = null;
+
+    if (!tipoSeleccionado) return;
+
+    const config = camposExtra[tipoSeleccionado];
+    if (!config) return;
+
+    const div = document.createElement("div");
+    div.className = "mb-3";
+    div.id = "campo-extra-dinamico";
+    
+    const label = document.createElement("label");
+    label.htmlFor = "campo-extra-input";
+    label.className = "form-label";
+    label.textContent = config.label;
+    
+    const input = document.createElement("input");
+    input.type = config.type;
+    input.className = "form-control";
+    input.id = "campo-extra-input";
+    input.name = "campoExtra";
+    input.placeholder = config.placeholder || "";
+    if (config.min) input.min = config.min;
+    if (config.step) input.step = config.step;
+    if (config.required) input.required = true;
+    
+    div.appendChild(label);
+    div.appendChild(input);
+    campoExtraContainer.appendChild(div);
+    
+    campoExtraActual = input;
+  }
+
+  selectTipo.addEventListener("change", actualizarCampoExtra);
+
+  // ====================================================
+  // 7. FUNCIONES PARA MENSAJES
+  // ====================================================
+  function mostrarMensajeError(texto, duracion = 2000) {
+    mensajeFormulario.innerHTML = `<div class="alert alert-danger py-1 px-2 mb-0">❌ ${texto}</div>`;
+    setTimeout(() => {
+      mensajeFormulario.innerHTML = "";
+    }, duracion);
+  }
+
+  function mostrarMensajeExito(texto, duracion = 2000) {
+    mensajeFormulario.innerHTML = `<div class="alert alert-success py-1 px-2 mb-0">✅ ${texto}</div>`;
+    setTimeout(() => {
+      mensajeFormulario.innerHTML = "";
+    }, duracion);
+  }
+
+  // ====================================================
+  // 8. VALIDACIÓN DE ARCHIVOS
+  // ====================================================
+  function validarArchivo(file) {
+    if (!file) return { valido: false, error: "No se ha seleccionado ningún archivo" };
+    
+    const extension = file.name.split('.').pop().toLowerCase();
+    const tipoMIME = file.type.toLowerCase();
+    
+    const extensionesPermitidas = ['jpg', 'jpeg', 'png'];
+    const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png'];
+    
+    if (!extensionesPermitidas.includes(extension)) {
+        return { 
+            valido: false, 
+            error: `Solo se permiten archivos JPG/JPEG o PNG (extensión .${extension} no válida)` 
+        };
+    }
+    
+    if (!tiposPermitidos.includes(tipoMIME)) {
+        return { 
+            valido: false, 
+            error: `Tipo de archivo no válido: ${tipoMIME || 'desconocido'}. Solo JPG/JPEG o PNG` 
+        };
+    }
+    
+    return { valido: true };
+  }
+
+  // ====================================================
+  // 9. DRAG & DROP HANDLER
+  // ====================================================
+  const dropHandler = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDropArea.classList.remove("drag-over");
+
+    const files = e.dataTransfer.files;
+    
+    if (files.length > 1) {
+        mostrarMensajeError("Solo se permite subir un archivo");
+        e.dataTransfer.clearData();
+        limpiarArchivoSeleccionado();
+        return;
+    }
+    
+    const file = files[0];
+    if (!file) return;
+    
+    console.log("Archivo:", file.name, "Tipo:", file.type);
+    
+    const validacion = validarArchivo(file);
+    if (!validacion.valido) {
+        mostrarMensajeError(validacion.error);
+        e.dataTransfer.clearData();
+        limpiarArchivoSeleccionado();
+        return;
+    }
+    
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        dragDropArea.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "150px";
+        img.style.objectFit = "contain";
+        dragDropArea.appendChild(img);
+        dragDropArea.classList.add("added", "preview");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // ====================================================
+  // 10. EVENTO CHANGE DEL FILE INPUT
+  // ====================================================
+  const changeHandler = function() {
+    console.log("Files seleccionados:", this.files.length);
+    
+    if (this.files.length > 1) {
+        mostrarMensajeError("Solo se permite subir un archivo");
+        limpiarArchivoSeleccionado();
+        return;
+    }
+    
+    const file = this.files[0];
+    if (!file) return;
+    
+    console.log("Archivo seleccionado:", file.name, "Tipo:", file.type, "Tamaño:", file.size);
+    
+    const validacion = validarArchivo(file);
+    if (!validacion.valido) {
+        mostrarMensajeError(validacion.error);
+        limpiarArchivoSeleccionado();
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        dragDropArea.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "150px";
+        img.style.objectFit = "contain";
+        dragDropArea.appendChild(img);
+        dragDropArea.classList.add("added", "preview");
+    };
+    reader.onerror = function() {
+        mostrarMensajeError("Error al leer el archivo");
+        limpiarArchivoSeleccionado();
+    };
+    reader.readAsDataURL(file);
+  };
+
+  fileInput.addEventListener("change", changeHandler);
+
+  // ====================================================
+  // 11. ACTIVAR DRAG & DROP
+  // ====================================================
+  dragDropArea.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  dragDropArea.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dragDropArea.classList.add("drag-over");
+  });
+
+  dragDropArea.addEventListener("dragleave", () => {
+    dragDropArea.classList.remove("drag-over");
+  });
+
+  dragDropArea.addEventListener("drop", dropHandler);
+
+  // ====================================================
+  // 12. FUNCIÓN PARA RESETEAR DRAG & DROP
+  // ====================================================
+  function resetDragDrop() {
+    dragDropArea.innerHTML = `<p class="m-0">Arrastra una imagen aquí o haz clic</p>`;
+    dragDropArea.classList.remove("added", "preview", "drag-over");
+    limpiarArchivoSeleccionado();
+  }
+
+  // ====================================================
+  // 13. FUNCIÓN PARA CREAR INSTANCIA
+  // ====================================================
+  function crearInstanciaProducto(tipo, nombre, precio, descripcion, imagen, valorExtra) {
+    const nextId = productosTienda.length + 1;
+    
+    switch(tipo) {
+      case "televisor":
+        return new ProductoElectrodomestico(
+          nextId, 
+          nombre, 
+          parseFloat(precio), 
+          descripcion, 
+          imagen, 
+          parseInt(valorExtra) || 2
+        );
+      case "smartphone":
+        return new ProductoSmartphone(
+          nextId, 
+          nombre, 
+          parseFloat(precio), 
+          descripcion, 
+          imagen, 
+          valorExtra
+        );
+      case "audio":
+        return new ProductoAudio(
+          nextId, 
+          nombre, 
+          parseFloat(precio), 
+          descripcion, 
+          imagen, 
+          valorExtra
+        );
+      case "accesorio":
+        return new ProductoAccesorio(
+          nextId, 
+          nombre, 
+          parseFloat(precio), 
+          descripcion, 
+          imagen, 
+          valorExtra
+        );
+      case "videojuego":
+        return new ProductoVideojuego(
+          nextId, 
+          nombre, 
+          parseFloat(precio), 
+          descripcion, 
+          imagen, 
+          valorExtra
+        );
+      default:
+        return new Producto(
+          nextId, 
+          nombre, 
+          parseFloat(precio), 
+          descripcion, 
+          imagen
+        );
+    }
+  }
+
+  // ====================================================
+  // 14. FUNCIÓN PARA AÑADIR PRODUCTO Y ACTUALIZAR
+  // ====================================================
+  function añadirProductoATienda(nuevoProducto) {
+    productosTienda.push(nuevoProducto);
+    
+    if (inputBuscador) {
+      inputBuscador.dispatchEvent(new Event('input'));
+    }
+    
+    console.log("Producto añadido:", nuevoProducto);
+  }
+
+  // ====================================================
+  // 15. EVENTO SUBMIT DEL FORMULARIO
+  // ====================================================
+  formulario.addEventListener("submit", (e) => {
+    e.preventDefault();
+    
+    if (!selectTipo.value) {
+      mostrarMensajeError("Debes seleccionar un tipo de producto");
+      selectTipo.focus();
+      return;
+    }
+    
+    const nombre = document.getElementById("nombre-producto");
+    const precio = document.getElementById("precio-producto");
+    const descripcion = document.getElementById("descripcion-producto");
+    
+    if (!nombre.value.trim()) {
+      mostrarMensajeError("El nombre es obligatorio");
+      nombre.focus();
+      return;
+    }
+    
+    if (!precio.value || parseFloat(precio.value) <= 0) {
+      mostrarMensajeError("El precio debe ser un número positivo");
+      precio.focus();
+      return;
+    }
+    
+    if (campoExtraActual && campoExtraActual.required) {
+      if (!campoExtraActual.value.trim()) {
+        mostrarMensajeError(`El campo ${camposExtra[selectTipo.value].label} es obligatorio`);
+        campoExtraActual.focus();
+        return;
+      }
+      
+      if (selectTipo.value === "televisor") {
+        const garantia = parseInt(campoExtraActual.value);
+        if (isNaN(garantia) || garantia <= 0) {
+          mostrarMensajeError("La garantía debe ser un número positivo");
+          campoExtraActual.focus();
+          return;
+        }
+      }
+    }
+    
+    let imagenSrc = IMAGEN_DEFECTO;
+    if (fileInput.files.length > 0) {
+      const file = fileInput.files[0];
+      imagenSrc = URL.createObjectURL(file);
+    }
+    
+    const valorExtra = campoExtraActual ? campoExtraActual.value.trim() : "";
+    
+    const nuevoProducto = crearInstanciaProducto(
+      selectTipo.value,
+      nombre.value.trim(),
+      precio.value,
+      descripcion.value.trim() || "Sin descripción",
+      imagenSrc,
+      valorExtra
+    );
+    
+    añadirProductoATienda(nuevoProducto);
+    mostrarMensajeExito("Producto añadido correctamente");
+    
+    formulario.reset();
+    resetDragDrop();
+    actualizarCampoExtra();
+    
+    if (fileInput.files.length > 0 && imagenSrc !== IMAGEN_DEFECTO) {
+      URL.revokeObjectURL(imagenSrc);
+    }
+  });
+});
+
+// --------------------
+// FUNCIONES DEL CARRITO
+// --------------------
+
 function mostrarMensajeCarrito(card, texto) {
   const existente = card.querySelector(".mensaje-carrito");
   if (existente) existente.remove();
@@ -25,9 +486,6 @@ function mostrarMensajeCarrito(card, texto) {
   setTimeout(() => msg.remove(), 1500);
 }
 
-// --------------------
-// AVISO debajo del input del carrito (estilo como la foto)
-// --------------------
 function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
   const slot = lineaProductoDiv.querySelector(".aviso-slot");
   if (!slot) return;
@@ -38,7 +496,6 @@ function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
   msg.className = "aviso-max-copias";
   msg.textContent = texto;
 
-  // Estilo inline para que siempre se vea
   msg.style.background = "#f8d7da";
   msg.style.border = "1px solid #f5c2c7";
   msg.style.color = "#842029";
@@ -49,88 +506,58 @@ function mostrarAvisoBajoInput(lineaProductoDiv, texto) {
   msg.style.fontWeight = "600";
 
   slot.appendChild(msg);
-
   setTimeout(() => msg.remove(), 1500);
 }
 
-// --------------------
-// TOTAL CARRITO
-// --------------------
 function actualizarTotalCarrito() {
   const carritoTotal = document.getElementById("carrito-total");
   if (!carritoTotal) return;
 
-  if (carrito.length === 0) {
+  if (carrito.size === 0) {
     carritoTotal.innerHTML = "";
     return;
   }
 
-  const totalCarrito = carrito.reduce((sum, p) => {
-    const cant = p.cantidad ?? 1;
-    return sum + (p.precio * cant);
-  }, 0);
-
-  carritoTotal.innerHTML = `<h5>Total: ${totalCarrito.toFixed(2)} €</h5>`;
+  const total = getTotalCarrito();
+  carritoTotal.innerHTML = `<h5>Total: ${total.toFixed(2)} €</h5>`;
 }
 
-// --------------------
-// BOTÓN "AÑADIR" del catálogo: activar/desactivar según cantidad
-// --------------------
 function actualizarBotonAddCatalogo(idProducto, deshabilitar) {
-  const cardOriginal = document.querySelector(`.card[data-pid="${idProducto}"]`);
+  const idStr = String(idProducto);
+  const cardOriginal = document.querySelector(`.card[data-pid="${idStr}"]`);
   if (!cardOriginal) return;
+
   const btn = cardOriginal.querySelector(".btn-add-carrito");
   if (!btn) return;
+
   btn.disabled = !!deshabilitar;
 }
 
-// --------------------
-// AGREGAR AL CARRITO
-// --------------------
 function agregarAlCarrito(producto) {
-  const existente = carrito.find(p => p.id === producto.id);
-
-  if (existente) {
-    const actual = existente.cantidad ?? 1;
-
-    if (actual >= MAX_COPIAS) {
-      // NO actualizar (se queda en 20) y marcar para mostrar aviso en el carrito
-      existente._avisarMax = true;
-      existente.cantidad = MAX_COPIAS;
-    } else {
-      existente.cantidad = Math.min(MAX_COPIAS, actual + 1);
-    }
-  } else {
-    producto.cantidad = 1;
-    carrito.push(producto);
-  }
-
-  // Si llega a 20 por añadir, desactivar botón del catálogo
-  actualizarBotonAddCatalogo(producto.id, (carrito.find(p => p.id === producto.id)?.cantidad ?? 0) >= MAX_COPIAS);
-
+  const res = addToCarrito(producto);
+  const cantidad = getCantidadCarrito(producto.id);
+  actualizarBotonAddCatalogo(producto.id, cantidad >= MAX_COPIAS);
   mostrarCarrito();
 }
 
-// --------------------
-// MOSTRAR CARRITO
-// --------------------
 function mostrarCarrito() {
   const carritoProductos = document.getElementById("carrito-productos");
   if (!carritoProductos) return;
-  carritoProductos.innerHTML = "";
 
-  carrito.forEach((producto) => {
-    const cantidadInicial = producto.cantidad ?? 1;
+  carritoProductos.innerHTML = "";
+  const items = getItemsCarrito();
+
+  items.forEach((item) => {
+    const cantidadInicial = item.cantidad ?? 1;
 
     const divProducto = document.createElement("div");
     divProducto.className = "d-flex align-items-start mb-3";
 
     divProducto.innerHTML = `
-      <img src="${producto.imagen}" alt="${producto.nombre}" class="img-fluid" style="width: 50px; height: 50px; margin-right: 10px;">
+      <img src="${item.imagen}" alt="${item.nombre}" class="img-fluid" style="width: 50px; height: 50px; margin-right: 10px;">
       <div class="flex-fill">
-        <div><strong>${producto.nombre}</strong></div>
-        <div>${producto.precio} €</div>
-
+        <div><strong>${item.nombre}</strong></div>
+        <div>${item.precio} €</div>
         <input type="number"
           class="form-control cantidad"
           value="${cantidadInicial}"
@@ -138,7 +565,7 @@ function mostrarCarrito() {
         >
         <div class="aviso-slot"></div>
         <div class="precio-total mt-1">
-          Total: ${(producto.precio * cantidadInicial).toFixed(2)} €
+          Total: ${(item.precio * cantidadInicial).toFixed(2)} €
         </div>
       </div>
     `;
@@ -148,7 +575,6 @@ function mostrarCarrito() {
 
     function detectarClickSpinnerSubir(e) {
       const rect = input.getBoundingClientRect();
-
       const clickEnZonaSpinner = e.clientX > rect.right - 30;
       if (!clickEnZonaSpinner) return;
 
@@ -158,16 +584,13 @@ function mostrarCarrito() {
       const actual = parseInt(input.value, 10);
       if (Number.isFinite(actual) && actual >= MAX_COPIAS) {
         e.preventDefault();
-        producto._avisarMax = true;
         mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
       }
     }
     input.addEventListener("pointerdown", detectarClickSpinnerSubir);
 
-    //Si está en 1, borrar
     function detectarClickSpinnerBajar(e) {
       const rect = input.getBoundingClientRect();
-
       const clickEnZonaSpinner = e.clientX > rect.right - 30;
       if (!clickEnZonaSpinner) return;
 
@@ -177,11 +600,8 @@ function mostrarCarrito() {
       const actual = parseInt(input.value, 10);
       if (Number.isFinite(actual) && actual === 1) {
         e.preventDefault();
-        carrito = carrito.filter(p => p.id !== producto.id);
-
-        //Al borrar, reactivar botón del catálogo
-        actualizarBotonAddCatalogo(producto.id, false);
-
+        setCantidadCarrito(item.id, 0);
+        actualizarBotonAddCatalogo(item.id, false);
         mostrarCarrito();
       }
     }
@@ -189,83 +609,50 @@ function mostrarCarrito() {
 
     function actualizarCantidadDesdeInput() {
       const valorEscrito = parseInt(input.value, 10);
-      const intentoPasarMax = Number.isFinite(valorEscrito) && valorEscrito > MAX_COPIAS;
+      if (Number.isNaN(valorEscrito)) return;
 
-      let cantidad = valorEscrito;
-      if (Number.isNaN(cantidad)) cantidad = 0;
+      const res = setCantidadCarrito(item.id, valorEscrito);
 
-      if (cantidad <= 0) {
-        carrito = carrito.filter(p => p.id !== producto.id);
-
-        //Al borrar, reactivar botón del catálogo
-        actualizarBotonAddCatalogo(producto.id, false);
-
+      if (res.action === "deleted") {
+        actualizarBotonAddCatalogo(item.id, false);
         mostrarCarrito();
         return;
       }
 
-      cantidad = Math.min(MAX_COPIAS, cantidad);
-
-      if (intentoPasarMax) {
-        producto._avisarMax = true;
+      if (res.action === "max_clamped") {
         mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
       }
 
-      input.value = cantidad;
-      producto.cantidad = cantidad;
-
-      //desactivar/activar botón del catálogo según cantidad
-      actualizarBotonAddCatalogo(producto.id, cantidad >= MAX_COPIAS);
-
-      totalLineaDiv.textContent = `Total: ${(producto.precio * cantidad).toFixed(2)} €`;
+      input.value = res.cantidad;
+      totalLineaDiv.textContent = `Total: ${(item.precio * res.cantidad).toFixed(2)} €`;
+      actualizarBotonAddCatalogo(item.id, res.cantidad >= MAX_COPIAS);
       actualizarTotalCarrito();
     }
 
     input.addEventListener("input", actualizarCantidadDesdeInput);
     input.addEventListener("change", actualizarCantidadDesdeInput);
+
     input.addEventListener("keydown", (e) => {
-      // Flecha arriba cuando ya está en MAX
       if (e.key === "ArrowUp") {
         const actual = parseInt(input.value, 10);
         if (Number.isFinite(actual) && actual >= MAX_COPIAS) {
           e.preventDefault();
-
-          input.value = MAX_COPIAS;
-          producto.cantidad = MAX_COPIAS;
-
-          // Desactivar botón del catálogo automáticamente al llegar a 20
-          actualizarBotonAddCatalogo(producto.id, true);
-
-          totalLineaDiv.textContent = `Total: ${(producto.precio * MAX_COPIAS).toFixed(2)} €`;
-          actualizarTotalCarrito();
-
-          producto._avisarMax = true;
           mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
         }
       }
 
-      // cuando esta en uno y le damos flecha abajo -> borrar y desaparecer
       if (e.key === "ArrowDown") {
         const actual = parseInt(input.value, 10);
         if (Number.isFinite(actual) && actual === 1) {
           e.preventDefault();
-          carrito = carrito.filter(p => p.id !== producto.id);
-
-          // Al borrar, reactivar botón del catálogo
-          actualizarBotonAddCatalogo(producto.id, false);
-
+          setCantidadCarrito(item.id, 0);
+          actualizarBotonAddCatalogo(item.id, false);
           mostrarCarrito();
         }
       }
     });
 
     carritoProductos.appendChild(divProducto);
-
-    // Mostrar mensaje maximo 20 copias
-    if (producto._avisarMax) {
-      mostrarAvisoBajoInput(divProducto, `No se permiten más de ${MAX_COPIAS} copias.`);
-      delete producto._avisarMax;
-    }
   });
 
   actualizarTotalCarrito();
@@ -281,10 +668,12 @@ document.addEventListener("click", (e) => {
   const card = boton.closest(".card");
   if (!card) return;
 
-  const nombreProducto = card.querySelector(".card-title").textContent;
-  const precioProducto = parseFloat(card.querySelector(".fw-bold").textContent.replace(" €", ""));
+  const nombreProducto = card.querySelector(".card-title")?.textContent?.trim() || "";
+  const precioProducto = parseFloat(
+    (card.querySelector(".fw-bold")?.textContent || "0").replace(" €", "")
+  );
   const descripcionProducto = card.querySelector(".card-text")?.textContent || "Descripción no disponible";
-  const imagenProducto = card.querySelector(".card-img-top").src;
+  const imagenProducto = card.querySelector(".card-img-top")?.src || "";
 
   //id no aleatorio
   //if (!card.dataset.pid) {
@@ -297,11 +686,10 @@ document.addEventListener("click", (e) => {
   const idProducto = card.dataset.pid;
 
   const producto = new Producto(idProducto, nombreProducto, precioProducto, descripcionProducto, imagenProducto);
-
   agregarAlCarrito(producto);
 
-  const existente = carrito.find(p => p.id === idProducto);
-  if (existente && existente.cantidad >= MAX_COPIAS) {
+  const cant = getCantidadCarrito(producto.id);
+  if (cant >= MAX_COPIAS) {
     boton.disabled = true;
   }
 
@@ -370,48 +758,38 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Guardamos TODOS los productos (cada hijo es un <div class="col-...">)
   const productos = productosTienda;
   //let productosFiltrados = [...productos];
 
   function getTotalPaginas() {
-    return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA); 
+    return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA);
   }
-
-
 
   function obtenerExtra(producto) {
     if (producto.constructor.name === "ProductoElectrodomestico")
       return `Garantía: ${producto.garantia} años`;
-  
     if (producto.constructor.name === "ProductoSmartphone")
       return `Sistema: ${producto.sistemaOperativo}`;
-  
     if (producto.constructor.name === "ProductoAudio")
       return `Tipo: ${producto.tipoAudio}`;
-  
     if (producto.constructor.name === "ProductoAccesorio")
       return `Compatibilidad: ${producto.compatibilidad}`;
-  
     if (producto.constructor.name === "ProductoVideojuego")
       return `Generación: ${producto.generacion}`;
-  
     return "";
   }
-  
 
   function pintarProductos() {
     gridProductos.innerHTML = "";
-  
+
     const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA;
     const fin = inicio + PRODUCTOS_POR_PAGINA;
-  
     const productosPagina = productosFiltrados.slice(inicio, fin);
-  
+
     productosPagina.forEach((prod) => {
       const col = document.createElement("div");
       col.className = "col-12 col-sm-6 col-md-4";
-  
+
       col.innerHTML = `
         <div class="card h-100" data-pid="${prod.id}">
           <button class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 btn-add-carrito">
@@ -429,14 +807,12 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
       `;
-  
+
       gridProductos.appendChild(col);
     });
-  
-    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productos.length}`;
-  }
 
-  
+    infoPaginacion.textContent = `Mostrando ${productosPagina.length} de ${productosFiltrados.length}`;
+  }
 
   function pintarBotones() {
     const total = getTotalPaginas();
@@ -446,14 +822,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     paginacionDiv.innerHTML = "";
-
     const nav = document.createElement("nav");
     nav.setAttribute("aria-label", "Paginación de productos");
-
     const ul = document.createElement("ul");
     ul.className = "pagination m-0";
 
-    // Anterior (solo si no estamos en la primera)
     if (paginaActual > 1) {
       const liAnt = document.createElement("li");
       liAnt.className = "page-item";
@@ -466,7 +839,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ul.appendChild(liAnt);
     }
 
-    // Números
     for (let i = 1; i <= total; i++) {
       const li = document.createElement("li");
       li.className = `page-item ${i === paginaActual ? "active" : ""}`;
@@ -479,7 +851,6 @@ document.addEventListener("DOMContentLoaded", () => {
       ul.appendChild(li);
     }
 
-    // Siguiente (solo si no estamos en la última)
     if (paginaActual < total) {
       const liSig = document.createElement("li");
       liSig.className = "page-item";
@@ -497,10 +868,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function actualizar() {
-    
     const total = getTotalPaginas();
     if (paginaActual > total) paginaActual = total || 1;
-
     pintarProductos();
     pintarBotones();
   }
@@ -526,8 +895,6 @@ document.addEventListener("DOMContentLoaded", () => {
     paginaActual = 1;
     actualizar();
   }
-
-
 
   if (inputBuscador) {
     inputBuscador.addEventListener("input", aplicarBusqueda);
@@ -558,95 +925,13 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --------------------
-// DRAG & DROP IMAGEN + PREVIEW + RESET
-// --------------------
-document.addEventListener("DOMContentLoaded", () => {
-
-  const dragDropArea = document.getElementById("drag-drop-area");
-  const fileInput = document.getElementById("archivo-imagen");
-  const formulario = document.getElementById("formulario-producto");
-
-  if (!dragDropArea || !fileInput || !formulario) return;
-
-  const mensajeOriginal = "Arrastra una imagen aquí o haz clic";
-
-  function mostrarPreview(file) {
-    if (!file.type.startsWith("image/")) return;
-
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-      dragDropArea.innerHTML = "";
-      const img = document.createElement("img");
-      img.src = e.target.result;
-
-      dragDropArea.appendChild(img);
-      dragDropArea.classList.add("added", "preview");
-    };
-
-    reader.readAsDataURL(file);
-  }
-
-  function resetDragDrop() {
-    dragDropArea.innerHTML = `<p class="m-0">${mensajeOriginal}</p>`;
-    dragDropArea.classList.remove("added", "preview", "drag-over");
-    fileInput.value = "";
-  }
-
-  // Click abre selector
-  dragDropArea.addEventListener("click", () => {
-    fileInput.click();
-  });
-
-  // Arrastrando encima
-  dragDropArea.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dragDropArea.classList.add("drag-over");
-  });
-
-  dragDropArea.addEventListener("dragleave", () => {
-    dragDropArea.classList.remove("drag-over");
-  });
-
-  // Soltar archivo
-  dragDropArea.addEventListener("drop", (e) => {
-    e.preventDefault();
-    dragDropArea.classList.remove("drag-over");
-
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      fileInput.files = e.dataTransfer.files;
-      mostrarPreview(file);
-    }
-  });
-
-  // Selección manual
-  fileInput.addEventListener("change", () => {
-    const file = fileInput.files[0];
-    if (file) {
-      mostrarPreview(file);
-    }
-  });
-
-  // RESET cuando se envía el formulario
-  formulario.addEventListener("submit", () => {
-    setTimeout(() => {
-      resetDragDrop();
-    }, 100); 
-  });
-
-});
-
-// --------------------
 // DESCRIPCIÓN EXTENDIDA DEL PRODUCTO 
 // --------------------
 document.addEventListener("DOMContentLoaded", () => {
-
   document.addEventListener("click", (e) => {
     const img = e.target.closest(".card img");
-    if (!img) return; // solo reaccionar al click en imagen
+    if (!img) return;
 
-    // Si ya hay un modal abierto, cerrarlo y salir
     const existingOverlay = document.querySelector(".product-overlay");
     const existingModal = document.querySelector(".product-modal");
     if (existingOverlay || existingModal) {
@@ -656,29 +941,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const card = img.closest(".card");
-
-    // Obtener datos del producto
     const titulo = card.querySelector(".card-title")?.textContent || "";
     const precio = card.querySelector(".fw-bold")?.textContent || "";
     const extra = card.querySelector("small")?.textContent || "";
     const descripcion = card.querySelector(".card-text")?.textContent || "";
 
-    // Crear overlay
     const overlay = document.createElement("div");
     overlay.className = "product-overlay";
 
-    // Crear modal
     const modal = document.createElement("div");
     modal.className = "product-modal";
 
-    // Imagen
     const modalImage = document.createElement("div");
     modalImage.className = "modal-image";
     const modalImg = document.createElement("img");
     modalImg.src = img.src;
     modalImage.appendChild(modalImg);
 
-    // Detalles
     const modalDetails = document.createElement("div");
     modalDetails.className = "modal-details";
     modalDetails.innerHTML = `
@@ -695,7 +974,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(overlay);
     document.body.appendChild(modal);
 
-    // Función cerrar
     function cerrarModal() {
       modal.remove();
       overlay.remove();
@@ -704,6 +982,4 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay.addEventListener("click", cerrarModal);
     modal.querySelector(".close-modal").addEventListener("click", cerrarModal);
   });
-
-
 });
