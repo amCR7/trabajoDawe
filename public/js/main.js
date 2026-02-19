@@ -716,20 +716,8 @@ document.addEventListener("click", (e) => {
   // actualizar icono inmediatamente
   botonFav.textContent = producto.favorito ? "❤️" : "🤍";
 
-  // recalcular lista según la vista actual
-  if (mostrandoVistaFavoritos) {
-    productosFiltrados = productosTienda.filter(p => p.favorito);
-  } else {
-    productosFiltrados = [...productosTienda];
-  }
 
-  // ajustar página actual si la eliminación reduce total de páginas
-  const totalPaginas = window.miApp.getTotalPaginas();
-  if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
-
-  // repintar productos y botones sin cambiar la página actual
-  window.miApp.pintarProductos();
-  window.miApp.pintarBotones();
+  window.miApp.aplicarFiltros();
 });
 
 
@@ -882,7 +870,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pintarProductos,
     pintarBotones,
     actualizar,
-    getTotalPaginas
+    getTotalPaginas,
+    aplicarFiltros
   };
 
 
@@ -902,11 +891,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const modoOrden = selectOrden.value;
     const categoria = selectCategoria.value; // "all" o "ProductoAudio" etc.
  
-    // Base: favoritos o todos
-    const base = mostrandoVistaFavoritos ? productos.filter(p => p.favorito) : productos;
- 
-    // 1) Filtrar por categoría
-    let resultado = base;
+    // 1) Base: todos los productos
+    let resultado = [...productos];
+
+    // 2) Filtrar por favoritos si corresponde
+    if (mostrandoVistaFavoritos) {
+      resultado = resultado.filter(p => p.favorito);
+    }
+
+    // 3) Filtrar por categoría
     if (categoria && categoria !== "all") {
       resultado = resultado.filter(p => p.constructor.name === categoria);
     }
@@ -928,6 +921,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (modoOrden === "nombre_desc") {
       copia.sort((a, b) => b.nombre.localeCompare(a.nombre, "es", { sensitivity: "base" }));
     }
+
+    productosFiltrados = copia;
+    paginaActual = 1;
+    actualizar();
  
     // Título
     if (tituloMain) {
@@ -943,12 +940,12 @@ document.addEventListener("DOMContentLoaded", () => {
       tituloMain.textContent = `${txtCat}${txtBusq}`;
     }
  
-    productosFiltrados = copia;
-    paginaActual = 1;
-    actualizar();
-    }
+    //productosFiltrados = copia;
+    //paginaActual = 1;
+    //actualizar();
+  }
  
-    // Eventos
+  // Eventos
     inputBuscador.addEventListener("input", aplicarFiltros);
     selectOrden.addEventListener("change", aplicarFiltros);
     selectCategoria.addEventListener("change", aplicarFiltros);
