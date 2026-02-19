@@ -42,6 +42,7 @@ header h1 {
   width: 30%;                 
   background: rgba(0,0,0,0.25);
   border-radius: 8px;
+  align-self: flex-start;
 }
 
 
@@ -213,6 +214,28 @@ header h1 {
   cursor: pointer;
   z-index: 1002;
 }
+
+#grid-productos .col {
+  display: flex;
+}
+
+#grid-productos .card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#grid-productos .card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#grid-productos .card img {
+  height: 200px;
+  object-fit: contain;
+}
+
 .aviso-slot { min-height: 18px; width: 100%; }
 
 

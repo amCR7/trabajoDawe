@@ -738,13 +738,15 @@ document.addEventListener("click", (e) => {
 
 
 // --------------------
-// PAGINACIÓN
+// PAGINACIÓN + BUSCADOR + FILTRO (categoría + orden + búsqueda)
 // --------------------
 document.addEventListener("DOMContentLoaded", () => {
   const gridProductos = document.getElementById("grid-productos");
   const infoPaginacion = document.getElementById("info-paginacion");
   const paginacionDiv = document.getElementById("paginacion");
   const inputBuscador = document.getElementById("buscador");
+  const selectOrden = document.getElementById("orden-productos");
+  const selectCategoria = document.getElementById("filtro-categoria"); 
   const tituloMain = document.getElementById("titulo-productos");
   const btnFavoritos = document.getElementById("btn-favoritos");
   const btnInicio = document.getElementById("btn-inicio");
@@ -755,9 +757,13 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("Faltan elementos: #grid-productos, #info-paginacion o #paginacion");
     return;
   }
+  
+  if (!inputBuscador || !selectOrden || !selectCategoria) {
+    console.error("Faltan #buscador o #orden-productos o #filtro-categoria");
+    return;
+  }
 
   const productos = productosTienda;
-  //let productosFiltrados = [...productos];
 
   function getTotalPaginas() {
     return Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA);
@@ -872,28 +878,6 @@ document.addEventListener("DOMContentLoaded", () => {
     pintarBotones();
   }
 
-  function aplicarBusqueda() {
-    const texto = (inputBuscador?.value ?? "").trim();
-    const textoLower = texto.toLowerCase();
-
-    if (tituloMain) {
-      tituloMain.textContent = (texto === "")
-        ? "Todos los productos"
-        : `Buscando por: ${texto}`;
-    }
-
-    if (texto === "") {
-      productosFiltrados = [...productos];
-    } else {
-      productosFiltrados = productos.filter((prod) => {
-        return prod.nombre.toLowerCase().includes(textoLower);
-      });
-    }
-
-    paginaActual = 1;
-    actualizar();
-  }
-
   window.miApp = {
     pintarProductos,
     pintarBotones,
@@ -901,32 +885,96 @@ document.addEventListener("DOMContentLoaded", () => {
     getTotalPaginas
   };
 
-  if (inputBuscador) {
-    inputBuscador.addEventListener("input", aplicarBusqueda);
-    aplicarBusqueda();
-  } else {
-    actualizar();
-  }
 
-  if (btnFavoritos) {
-    btnFavoritos.addEventListener("click", (e) => {
+//--------------------
+// FILTRAR + BUSCAR + ORDENAR (UNA SOLA FUNCIÓN)
+// --------------------
+  function normalizarTexto(str) {
+    return (str ?? "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+    }
+ 
+  function aplicarFiltros() {
+    const q = normalizarTexto(inputBuscador.value.trim());
+    const modoOrden = selectOrden.value;
+    const categoria = selectCategoria.value; // "all" o "ProductoAudio" etc.
+ 
+    // Base: favoritos o todos
+    const base = mostrandoVistaFavoritos ? productos.filter(p => p.favorito) : productos;
+ 
+    // 1) Filtrar por categoría
+    let resultado = base;
+    if (categoria && categoria !== "all") {
+      resultado = resultado.filter(p => p.constructor.name === categoria);
+    }
+ 
+    // 2) Buscar por nombre
+    if (q !== "") {
+      resultado = resultado.filter(p => normalizarTexto(p.nombre).includes(q));
+    }
+ 
+    // 3) Ordenar
+    const copia = [...resultado];
+ 
+    if (modoOrden === "precio_asc") {
+      copia.sort((a, b) => a.precio - b.precio);
+    } else if (modoOrden === "precio_desc") {
+      copia.sort((a, b) => b.precio - a.precio);
+    } else if (modoOrden === "nombre_asc") {
+      copia.sort((a, b) => a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" }));
+    } else if (modoOrden === "nombre_desc") {
+      copia.sort((a, b) => b.nombre.localeCompare(a.nombre, "es", { sensitivity: "base" }));
+    }
+ 
+    // Título
+    if (tituloMain) {
+      const txtCat =
+      !categoria || categoria === "all"
+      ? (mostrandoVistaFavoritos ? "Favoritos" : "Todos los productos")
+      : `Categoría: ${selectCategoria.options[selectCategoria.selectedIndex].text}`;
+ 
+      const txtBusq = (inputBuscador.value.trim() !== "")
+      ? ` · Buscando: ${inputBuscador.value.trim()}`
+      : "";
+ 
+      tituloMain.textContent = `${txtCat}${txtBusq}`;
+    }
+ 
+    productosFiltrados = copia;
+    paginaActual = 1;
+    actualizar();
+    }
+ 
+    // Eventos
+    inputBuscador.addEventListener("input", aplicarFiltros);
+    selectOrden.addEventListener("change", aplicarFiltros);
+    selectCategoria.addEventListener("change", aplicarFiltros);
+ 
+    // Favoritos / Inicio
+    if (btnFavoritos) {
+      btnFavoritos.addEventListener("click", (e) => {
       e.preventDefault();
       mostrandoVistaFavoritos = true;
-      productosFiltrados = productos.filter(p => p.favorito);
       paginaActual = 1;
-      actualizar();
-    });
-  }
-
-  if (btnInicio) {
-    btnInicio.addEventListener("click", (e) => {
+      aplicarFiltros();
+      });
+    }
+ 
+    if (btnInicio) {
+      btnInicio.addEventListener("click", (e) => {
       e.preventDefault();
       mostrandoVistaFavoritos = false;
-      productosFiltrados = [...productos];
       paginaActual = 1;
-      actualizar();
+      aplicarFiltros();
     });
   }
+ 
+  // Init
+  productosFiltrados = [...productos];
+  aplicarFiltros();
 });
 
 // --------------------
