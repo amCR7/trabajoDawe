@@ -717,7 +717,7 @@ document.addEventListener("click", (e) => {
   botonFav.textContent = producto.favorito ? "❤️" : "🤍";
 
 
-  window.miApp.aplicarFiltros();
+  window.miApp.aplicarFiltros(false);
 });
 
 
@@ -886,7 +886,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .replace(/[\u0300-\u036f]/g, "");
     }
  
-  function aplicarFiltros() {
+  function aplicarFiltros(resetPagina = true) {
     const q = normalizarTexto(inputBuscador.value.trim());
     const modoOrden = selectOrden.value;
     const categoria = selectCategoria.value; // "all" o "ProductoAudio" etc.
@@ -923,7 +923,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     productosFiltrados = copia;
-    paginaActual = 1;
+    if (resetPagina) {
+      paginaActual = 1;
+    } else {
+      const totalPaginas = getTotalPaginas();
+      if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
+    }
     actualizar();
  
     // Título
