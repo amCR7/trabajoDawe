@@ -97,7 +97,36 @@
 
             <div class="d-flex justify-content-between align-items-center gap-3">
                 <h2 id="titulo-productos" class="h4 m-0">Todos los productos</h2>
-                <input id="buscador" class="form-control" style="max-width:320px" placeholder="Buscar por nombre">
+                <div class="d-flex align-items-center gap-2" style="width:640px;">
+                    <select id="filtro-categoria" class="form-select" style="width:220px;">
+                        <option value="all">--FILTRO CATEGORÍA--</option>
+                        <option value="ProductoElectrodomestico">Electrodomésticos</option>
+                        <option value="ProductoSmartphone">Smartphones</option>
+                        <option value="ProductoAudio">Audio</option>
+                        <option value="ProductoAccesorio">Accesorios</option>
+                        <option value="ProductoVideojuego">Videojuegos</option>
+                    </select>
+                    
+                    
+                    
+                    <select 
+                        id="orden-productos" 
+                        class="form-select"
+                        style="width:220px;"
+                    >
+                        <option value="none">--FILTRO ORDEN--</option>
+                        <option value="precio_asc">Precio ↑</option>
+                        <option value="precio_desc">Precio ↓</option>
+                        <option value="nombre_asc">Nombre A–Z</option>
+                        <option value="nombre_desc">Nombre Z–A</option>
+                    </select>
+
+                    <input 
+                        id="buscador" 
+                        class="form-control"
+                        placeholder="Buscar por nombre"
+                    >
+                </div>
             </div>
 
             <hr>
