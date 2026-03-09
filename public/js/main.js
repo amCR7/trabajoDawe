@@ -28,8 +28,8 @@ const PRODUCTOS_POR_PAGINA = 6;
 let paginaActual = 1;
 //let carrito = [];
 let favoritos = [];
-let productosFiltrados = [...productosTienda]; // GLOBAL
-let mostrandoVistaFavoritos = false; // GLOBAL
+let productosFiltrados = [...productosTienda]; 
+let mostrandoVistaFavoritos = false; 
 //const MAX_COPIAS = 20;
 
 // --------------------
@@ -716,8 +716,20 @@ document.addEventListener("click", (e) => {
   // actualizar icono inmediatamente
   botonFav.textContent = producto.favorito ? "❤️" : "🤍";
 
+  // recalcular lista según la vista actual
+  if (mostrandoVistaFavoritos) {
+    productosFiltrados = productosTienda.filter(p => p.favorito);
+  } else {
+    productosFiltrados = [...productosTienda];
+  }
 
-  window.miApp.aplicarFiltros(false);
+  // ajustar página actual si la eliminación reduce total de páginas
+  const totalPaginas = window.miApp.getTotalPaginas();
+  if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
+
+  // repintar productos y botones sin cambiar la página actual
+  window.miApp.pintarProductos();
+  window.miApp.pintarBotones();
 });
 
 
@@ -870,8 +882,7 @@ document.addEventListener("DOMContentLoaded", () => {
     pintarProductos,
     pintarBotones,
     actualizar,
-    getTotalPaginas,
-    aplicarFiltros
+    getTotalPaginas
   };
 
 
@@ -886,20 +897,16 @@ document.addEventListener("DOMContentLoaded", () => {
     .replace(/[\u0300-\u036f]/g, "");
     }
  
-  function aplicarFiltros(resetPagina = true) {
+  function aplicarFiltros() {
     const q = normalizarTexto(inputBuscador.value.trim());
     const modoOrden = selectOrden.value;
     const categoria = selectCategoria.value; // "all" o "ProductoAudio" etc.
  
-    // 1) Base: todos los productos
-    let resultado = [...productos];
-
-    // 2) Filtrar por favoritos si corresponde
-    if (mostrandoVistaFavoritos) {
-      resultado = resultado.filter(p => p.favorito);
-    }
-
-    // 3) Filtrar por categoría
+    // Base: favoritos o todos
+    const base = mostrandoVistaFavoritos ? productos.filter(p => p.favorito) : productos;
+ 
+    // 1) Filtrar por categoría
+    let resultado = base;
     if (categoria && categoria !== "all") {
       resultado = resultado.filter(p => p.constructor.name === categoria);
     }
@@ -921,15 +928,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (modoOrden === "nombre_desc") {
       copia.sort((a, b) => b.nombre.localeCompare(a.nombre, "es", { sensitivity: "base" }));
     }
-
-    productosFiltrados = copia;
-    if (resetPagina) {
-      paginaActual = 1;
-    } else {
-      const totalPaginas = getTotalPaginas();
-      if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
-    }
-    actualizar();
  
     // Título
     if (tituloMain) {
@@ -945,12 +943,12 @@ document.addEventListener("DOMContentLoaded", () => {
       tituloMain.textContent = `${txtCat}${txtBusq}`;
     }
  
-    //productosFiltrados = copia;
-    //paginaActual = 1;
-    //actualizar();
-  }
+    productosFiltrados = copia;
+    paginaActual = 1;
+    actualizar();
+    }
  
-  // Eventos
+    // Eventos
     inputBuscador.addEventListener("input", aplicarFiltros);
     selectOrden.addEventListener("change", aplicarFiltros);
     selectCategoria.addEventListener("change", aplicarFiltros);
