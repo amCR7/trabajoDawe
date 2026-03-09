@@ -26,11 +26,24 @@ import {
 // ====================================================
 const PRODUCTOS_POR_PAGINA = 6;
 let paginaActual = 1;
-//let carrito = [];
 let favoritos = [];
-let productosFiltrados = [...productosTienda]; // GLOBAL
-let mostrandoVistaFavoritos = false; // GLOBAL
-//const MAX_COPIAS = 20;
+let productosFiltrados = [...productosTienda];
+let mostrandoVistaFavoritos = false;
+
+// ====================================================
+// FUNCIONES AUXILIARES
+// ====================================================
+function shortDescription(text, words = 3) {
+  if (!text) return "";
+
+  const parts = text.trim().split(/\s+/);
+
+  if (parts.length <= words) {
+    return text;
+  }
+
+  return parts.slice(0, words).join(" ") + "...";
+}
 
 // --------------------
 // FORMULARIO AÑADIR PRODUCTO
@@ -109,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
     dragDropArea.classList.remove("added", "preview", "drag-over");
   }
 
-  // Limpiar al cargar
   limpiarArchivoSeleccionado();
 
   // ====================================================
@@ -117,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================================================
   function actualizarCampoExtra() {
     const tipoSeleccionado = selectTipo.value;
-    
+
     campoExtraContainer.innerHTML = "";
     campoExtraActual = null;
 
@@ -129,12 +141,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const div = document.createElement("div");
     div.className = "mb-3";
     div.id = "campo-extra-dinamico";
-    
+
     const label = document.createElement("label");
     label.htmlFor = "campo-extra-input";
     label.className = "form-label";
     label.textContent = config.label;
-    
+
     const input = document.createElement("input");
     input.type = config.type;
     input.className = "form-control";
@@ -144,11 +156,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (config.min) input.min = config.min;
     if (config.step) input.step = config.step;
     if (config.required) input.required = true;
-    
+
     div.appendChild(label);
     div.appendChild(input);
     campoExtraContainer.appendChild(div);
-    
+
     campoExtraActual = input;
   }
 
@@ -176,27 +188,27 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================================================
   function validarArchivo(file) {
     if (!file) return { valido: false, error: "No se ha seleccionado ningún archivo" };
-    
+
     const extension = file.name.split('.').pop().toLowerCase();
     const tipoMIME = file.type.toLowerCase();
-    
+
     const extensionesPermitidas = ['jpg', 'jpeg', 'png'];
     const tiposPermitidos = ['image/jpeg', 'image/jpg', 'image/png'];
-    
+
     if (!extensionesPermitidas.includes(extension)) {
-        return { 
-            valido: false, 
-            error: `Solo se permiten archivos JPG/JPEG o PNG (extensión .${extension} no válida)` 
-        };
+      return {
+        valido: false,
+        error: `Solo se permiten archivos JPG/JPEG o PNG (extensión .${extension} no válida)`
+      };
     }
-    
+
     if (!tiposPermitidos.includes(tipoMIME)) {
-        return { 
-            valido: false, 
-            error: `Tipo de archivo no válido: ${tipoMIME || 'desconocido'}. Solo JPG/JPEG o PNG` 
-        };
+      return {
+        valido: false,
+        error: `Tipo de archivo no válido: ${tipoMIME || 'desconocido'}. Solo JPG/JPEG o PNG`
+      };
     }
-    
+
     return { valido: true };
   }
 
@@ -209,41 +221,41 @@ document.addEventListener("DOMContentLoaded", () => {
     dragDropArea.classList.remove("drag-over");
 
     const files = e.dataTransfer.files;
-    
+
     if (files.length > 1) {
-        mostrarMensajeError("Solo se permite subir un archivo");
-        e.dataTransfer.clearData();
-        limpiarArchivoSeleccionado();
-        return;
+      mostrarMensajeError("Solo se permite subir un archivo");
+      e.dataTransfer.clearData();
+      limpiarArchivoSeleccionado();
+      return;
     }
-    
+
     const file = files[0];
     if (!file) return;
-    
+
     console.log("Archivo:", file.name, "Tipo:", file.type);
-    
+
     const validacion = validarArchivo(file);
     if (!validacion.valido) {
-        mostrarMensajeError(validacion.error);
-        e.dataTransfer.clearData();
-        limpiarArchivoSeleccionado();
-        return;
+      mostrarMensajeError(validacion.error);
+      e.dataTransfer.clearData();
+      limpiarArchivoSeleccionado();
+      return;
     }
-    
+
     const dt = new DataTransfer();
     dt.items.add(file);
     fileInput.files = dt.files;
 
     const reader = new FileReader();
     reader.onload = function (e) {
-        dragDropArea.innerHTML = "";
-        const img = document.createElement("img");
-        img.src = e.target.result;
-        img.style.maxWidth = "100%";
-        img.style.maxHeight = "150px";
-        img.style.objectFit = "contain";
-        dragDropArea.appendChild(img);
-        dragDropArea.classList.add("added", "preview");
+      dragDropArea.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = e.target.result;
+      img.style.maxWidth = "100%";
+      img.style.maxHeight = "150px";
+      img.style.objectFit = "contain";
+      dragDropArea.appendChild(img);
+      dragDropArea.classList.add("added", "preview");
     };
     reader.readAsDataURL(file);
   };
@@ -251,41 +263,41 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================================================
   // 10. EVENTO CHANGE DEL FILE INPUT
   // ====================================================
-  const changeHandler = function() {
+  const changeHandler = function () {
     console.log("Files seleccionados:", this.files.length);
-    
+
     if (this.files.length > 1) {
-        mostrarMensajeError("Solo se permite subir un archivo");
-        limpiarArchivoSeleccionado();
-        return;
+      mostrarMensajeError("Solo se permite subir un archivo");
+      limpiarArchivoSeleccionado();
+      return;
     }
-    
+
     const file = this.files[0];
     if (!file) return;
-    
+
     console.log("Archivo seleccionado:", file.name, "Tipo:", file.type, "Tamaño:", file.size);
-    
+
     const validacion = validarArchivo(file);
     if (!validacion.valido) {
-        mostrarMensajeError(validacion.error);
-        limpiarArchivoSeleccionado();
-        return;
+      mostrarMensajeError(validacion.error);
+      limpiarArchivoSeleccionado();
+      return;
     }
-    
+
     const reader = new FileReader();
     reader.onload = function (e) {
-        dragDropArea.innerHTML = "";
-        const img = document.createElement("img");
-        img.src = e.target.result;
-        img.style.maxWidth = "100%";
-        img.style.maxHeight = "150px";
-        img.style.objectFit = "contain";
-        dragDropArea.appendChild(img);
-        dragDropArea.classList.add("added", "preview");
+      dragDropArea.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = e.target.result;
+      img.style.maxWidth = "100%";
+      img.style.maxHeight = "150px";
+      img.style.objectFit = "contain";
+      dragDropArea.appendChild(img);
+      dragDropArea.classList.add("added", "preview");
     };
-    reader.onerror = function() {
-        mostrarMensajeError("Error al leer el archivo");
-        limpiarArchivoSeleccionado();
+    reader.onerror = function () {
+      mostrarMensajeError("Error al leer el archivo");
+      limpiarArchivoSeleccionado();
     };
     reader.readAsDataURL(file);
   };
@@ -324,59 +336,59 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================================================
   function crearInstanciaProducto(tipo, nombre, precio, descripcion, imagen, valorExtra) {
     const nextId = productosTienda.length + 1;
-    
-    switch(tipo) {
+
+    switch (tipo) {
       case "televisor":
         return new ProductoElectrodomestico(
-          nextId, 
-          nombre, 
-          parseFloat(precio), 
-          descripcion, 
-          imagen, 
+          nextId,
+          nombre,
+          parseFloat(precio),
+          descripcion,
+          imagen,
           parseInt(valorExtra) || 2
         );
       case "smartphone":
         return new ProductoSmartphone(
-          nextId, 
-          nombre, 
-          parseFloat(precio), 
-          descripcion, 
-          imagen, 
+          nextId,
+          nombre,
+          parseFloat(precio),
+          descripcion,
+          imagen,
           valorExtra
         );
       case "audio":
         return new ProductoAudio(
-          nextId, 
-          nombre, 
-          parseFloat(precio), 
-          descripcion, 
-          imagen, 
+          nextId,
+          nombre,
+          parseFloat(precio),
+          descripcion,
+          imagen,
           valorExtra
         );
       case "accesorio":
         return new ProductoAccesorio(
-          nextId, 
-          nombre, 
-          parseFloat(precio), 
-          descripcion, 
-          imagen, 
+          nextId,
+          nombre,
+          parseFloat(precio),
+          descripcion,
+          imagen,
           valorExtra
         );
       case "videojuego":
         return new ProductoVideojuego(
-          nextId, 
-          nombre, 
-          parseFloat(precio), 
-          descripcion, 
-          imagen, 
+          nextId,
+          nombre,
+          parseFloat(precio),
+          descripcion,
+          imagen,
           valorExtra
         );
       default:
         return new Producto(
-          nextId, 
-          nombre, 
-          parseFloat(precio), 
-          descripcion, 
+          nextId,
+          nombre,
+          parseFloat(precio),
+          descripcion,
           imagen
         );
     }
@@ -387,11 +399,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================================================
   function añadirProductoATienda(nuevoProducto) {
     productosTienda.push(nuevoProducto);
-    
+
     if (inputBuscador) {
       inputBuscador.dispatchEvent(new Event('input'));
     }
-    
+
     console.log("Producto añadido:", nuevoProducto);
   }
 
@@ -400,36 +412,36 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====================================================
   formulario.addEventListener("submit", (e) => {
     e.preventDefault();
-    
+
     if (!selectTipo.value) {
       mostrarMensajeError("Debes seleccionar un tipo de producto");
       selectTipo.focus();
       return;
     }
-    
+
     const nombre = document.getElementById("nombre-producto");
     const precio = document.getElementById("precio-producto");
     const descripcion = document.getElementById("descripcion-producto");
-    
+
     if (!nombre.value.trim()) {
       mostrarMensajeError("El nombre es obligatorio");
       nombre.focus();
       return;
     }
-    
+
     if (!precio.value || parseFloat(precio.value) <= 0) {
       mostrarMensajeError("El precio debe ser un número positivo");
       precio.focus();
       return;
     }
-    
+
     if (campoExtraActual && campoExtraActual.required) {
       if (!campoExtraActual.value.trim()) {
         mostrarMensajeError(`El campo ${camposExtra[selectTipo.value].label} es obligatorio`);
         campoExtraActual.focus();
         return;
       }
-      
+
       if (selectTipo.value === "televisor") {
         const garantia = parseInt(campoExtraActual.value);
         if (isNaN(garantia) || garantia <= 0) {
@@ -439,15 +451,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     }
-    
+
     let imagenSrc = IMAGEN_DEFECTO;
     if (fileInput.files.length > 0) {
       const file = fileInput.files[0];
       imagenSrc = URL.createObjectURL(file);
     }
-    
+
     const valorExtra = campoExtraActual ? campoExtraActual.value.trim() : "";
-    
+
     const nuevoProducto = crearInstanciaProducto(
       selectTipo.value,
       nombre.value.trim(),
@@ -456,14 +468,14 @@ document.addEventListener("DOMContentLoaded", () => {
       imagenSrc,
       valorExtra
     );
-    
+
     añadirProductoATienda(nuevoProducto);
     mostrarMensajeExito("Producto añadido correctamente");
-    
+
     formulario.reset();
     resetDragDrop();
     actualizarCampoExtra();
-    
+
     if (fileInput.files.length > 0 && imagenSrc !== IMAGEN_DEFECTO) {
       URL.revokeObjectURL(imagenSrc);
     }
@@ -473,7 +485,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // --------------------
 // FUNCIONES DEL CARRITO
 // --------------------
-
 function mostrarMensajeCarrito(card, texto) {
   const existente = card.querySelector(".mensaje-carrito");
   if (existente) existente.remove();
@@ -534,7 +545,7 @@ function actualizarBotonAddCatalogo(idProducto, deshabilitar) {
 }
 
 function agregarAlCarrito(producto) {
-  const res = addToCarrito(producto);
+  addToCarrito(producto);
   const cantidad = getCantidadCarrito(producto.id);
   actualizarBotonAddCatalogo(producto.id, cantidad >= MAX_COPIAS);
   mostrarCarrito();
@@ -672,17 +683,9 @@ document.addEventListener("click", (e) => {
   const precioProducto = parseFloat(
     (card.querySelector(".fw-bold")?.textContent || "0").replace(" €", "")
   );
-  const descripcionProducto = card.querySelector(".card-text")?.textContent || "Descripción no disponible";
+  const descripcionProducto = card.dataset.descripcionCompleta || "Descripción no disponible";
   const imagenProducto = card.querySelector(".card-img-top")?.src || "";
 
-  //id no aleatorio
-  //if (!card.dataset.pid) {
-  //  card.dataset.pid = nombreProducto
-    //  .toLowerCase()
-      //.trim()
-      //.replace(/\s+/g, "-")
-      //.replace(/[^a-z0-9\-]/g, "");
- // }
   const idProducto = card.dataset.pid;
 
   const producto = new Producto(idProducto, nombreProducto, precioProducto, descripcionProducto, imagenProducto);
@@ -710,23 +713,14 @@ document.addEventListener("click", (e) => {
   const producto = productosTienda.find(p => p.id === idProducto);
   if (!producto) return;
 
-  // alternar favorito
   producto.favorito = !producto.favorito;
-
-  // actualizar icono inmediatamente
   botonFav.textContent = producto.favorito ? "❤️" : "🤍";
-
 
   window.miApp.aplicarFiltros(false);
 });
 
-
-
-
-
-
 // --------------------
-// PAGINACIÓN + BUSCADOR + FILTRO (categoría + orden + búsqueda)
+// PAGINACIÓN + BUSCADOR + FILTRO
 // --------------------
 document.addEventListener("DOMContentLoaded", () => {
   const gridProductos = document.getElementById("grid-productos");
@@ -734,18 +728,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const paginacionDiv = document.getElementById("paginacion");
   const inputBuscador = document.getElementById("buscador");
   const selectOrden = document.getElementById("orden-productos");
-  const selectCategoria = document.getElementById("filtro-categoria"); 
+  const selectCategoria = document.getElementById("filtro-categoria");
   const tituloMain = document.getElementById("titulo-productos");
   const btnFavoritos = document.getElementById("btn-favoritos");
   const btnInicio = document.getElementById("btn-inicio");
-
-
 
   if (!gridProductos || !infoPaginacion || !paginacionDiv) {
     console.error("Faltan elementos: #grid-productos, #info-paginacion o #paginacion");
     return;
   }
-  
+
   if (!inputBuscador || !selectOrden || !selectCategoria) {
     console.error("Faltan #buscador o #orden-productos o #filtro-categoria");
     return;
@@ -783,7 +775,7 @@ document.addEventListener("DOMContentLoaded", () => {
       col.className = "col-12 col-sm-6 col-md-4";
 
       col.innerHTML = `
-        <div class="card h-100" data-pid="${prod.id}">
+        <div class="card h-100" data-pid="${prod.id}" data-descripcion-completa="${prod.descripcion}">
           <button class="btn btn-dark rounded-circle position-absolute top-0 end-0 m-2 btn-add-carrito">
             🛒
           </button>
@@ -793,7 +785,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <img src="${prod.imagen}" class="card-img-top" alt="${prod.nombre}">
           <div class="card-body">
             <h5 class="card-title">${prod.nombre}</h5>
-            <p class="card-text">${prod.descripcion}</p>
+            <p class="card-text">${shortDescription(prod.descripcion, 3)}</p>
             <div class="fw-bold">${prod.precio} €</div>
             <small class="text-muted">${obtenerExtra(prod)}</small>
           </div>
@@ -874,44 +866,38 @@ document.addEventListener("DOMContentLoaded", () => {
     aplicarFiltros
   };
 
-
-//--------------------
-// FILTRAR + BUSCAR + ORDENAR (UNA SOLA FUNCIÓN)
-// --------------------
+  // --------------------
+  // FILTRAR + BUSCAR + ORDENAR
+  // --------------------
   function normalizarTexto(str) {
     return (str ?? "")
-    .toString()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-    }
- 
+      .toString()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+  }
+
   function aplicarFiltros(resetPagina = true) {
     const q = normalizarTexto(inputBuscador.value.trim());
     const modoOrden = selectOrden.value;
-    const categoria = selectCategoria.value; // "all" o "ProductoAudio" etc.
- 
-    // 1) Base: todos los productos
+    const categoria = selectCategoria.value;
+
     let resultado = [...productos];
 
-    // 2) Filtrar por favoritos si corresponde
     if (mostrandoVistaFavoritos) {
       resultado = resultado.filter(p => p.favorito);
     }
 
-    // 3) Filtrar por categoría
     if (categoria && categoria !== "all") {
       resultado = resultado.filter(p => p.constructor.name === categoria);
     }
- 
-    // 2) Buscar por nombre
+
     if (q !== "") {
       resultado = resultado.filter(p => normalizarTexto(p.nombre).includes(q));
     }
- 
-    // 3) Ordenar
+
     const copia = [...resultado];
- 
+
     if (modoOrden === "precio_asc") {
       copia.sort((a, b) => a.precio - b.precio);
     } else if (modoOrden === "precio_desc") {
@@ -923,64 +909,58 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     productosFiltrados = copia;
+
     if (resetPagina) {
       paginaActual = 1;
     } else {
       const totalPaginas = getTotalPaginas();
       if (paginaActual > totalPaginas) paginaActual = totalPaginas || 1;
     }
+
     actualizar();
- 
-    // Título
+
     if (tituloMain) {
       const txtCat =
-      !categoria || categoria === "all"
-      ? (mostrandoVistaFavoritos ? "Favoritos" : "Todos los productos")
-      : `Categoría: ${selectCategoria.options[selectCategoria.selectedIndex].text}`;
- 
+        !categoria || categoria === "all"
+          ? (mostrandoVistaFavoritos ? "Favoritos" : "Todos los productos")
+          : `Categoría: ${selectCategoria.options[selectCategoria.selectedIndex].text}`;
+
       const txtBusq = (inputBuscador.value.trim() !== "")
-      ? ` · Buscando: ${inputBuscador.value.trim()}`
-      : "";
- 
+        ? ` · Buscando: ${inputBuscador.value.trim()}`
+        : "";
+
       tituloMain.textContent = `${txtCat}${txtBusq}`;
     }
- 
-    //productosFiltrados = copia;
-    //paginaActual = 1;
-    //actualizar();
   }
- 
-  // Eventos
-    inputBuscador.addEventListener("input", aplicarFiltros);
-    selectOrden.addEventListener("change", aplicarFiltros);
-    selectCategoria.addEventListener("change", aplicarFiltros);
- 
-    // Favoritos / Inicio
-    if (btnFavoritos) {
-      btnFavoritos.addEventListener("click", (e) => {
+
+  inputBuscador.addEventListener("input", aplicarFiltros);
+  selectOrden.addEventListener("change", aplicarFiltros);
+  selectCategoria.addEventListener("change", aplicarFiltros);
+
+  if (btnFavoritos) {
+    btnFavoritos.addEventListener("click", (e) => {
       e.preventDefault();
       mostrandoVistaFavoritos = true;
       paginaActual = 1;
       aplicarFiltros();
-      });
-    }
- 
-    if (btnInicio) {
-      btnInicio.addEventListener("click", (e) => {
+    });
+  }
+
+  if (btnInicio) {
+    btnInicio.addEventListener("click", (e) => {
       e.preventDefault();
       mostrandoVistaFavoritos = false;
       paginaActual = 1;
       aplicarFiltros();
     });
   }
- 
-  // Init
+
   productosFiltrados = [...productos];
   aplicarFiltros();
 });
 
 // --------------------
-// DESCRIPCIÓN EXTENDIDA DEL PRODUCTO 
+// DESCRIPCIÓN EXTENDIDA DEL PRODUCTO
 // --------------------
 document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", (e) => {
@@ -999,7 +979,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const titulo = card.querySelector(".card-title")?.textContent || "";
     const precio = card.querySelector(".fw-bold")?.textContent || "";
     const extra = card.querySelector("small")?.textContent || "";
-    const descripcion = card.querySelector(".card-text")?.textContent || "";
+    const descripcion = card.dataset.descripcionCompleta || "";
 
     const overlay = document.createElement("div");
     overlay.className = "product-overlay";
