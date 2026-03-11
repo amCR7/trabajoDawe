@@ -48,3 +48,22 @@
   text-align: center;
   padding: 1rem;
 }
+.menu-navegacion{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.menu-enlaces{
+  display:flex;
+  gap:20px;
+}
+
+.mensaje-offline{
+  background-color:red;
+  color:white;
+  border:2px solid white;
+  padding:6px 12px;
+  border-radius:6px;
+  font-weight:bold;
+}
