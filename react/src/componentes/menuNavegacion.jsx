@@ -1,19 +1,27 @@
-function MenuNavegacion({ estaOnline }) {
+function MenuNavegacion({ estaOnline, onAbrirCarrito }) {
   return (
     <nav className="menu-navegacion">
-
-      <div className="menu-enlaces">
-        <span>Inicio</span>
-        <span>Productos</span>
-        <span>Carrito</span>
-      </div>
+      <ul className="menu-enlaces">
+        <li><a href="#">Inicio</a></li>
+        <li>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              onAbrirCarrito()
+            }}
+          >
+            Carrito
+          </a>
+        </li>
+        <li><a href="#">Favoritos</a></li>
+      </ul>
 
       {!estaOnline && (
         <div className="mensaje-offline">
           Estás offline
         </div>
       )}
-
     </nav>
   )
 }

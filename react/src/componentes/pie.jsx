@@ -1,6 +1,6 @@
 function Pie({ texto }) {
   return (
-    <footer className="pie">
+    <footer className="pie-pagina">
       <p>{texto}</p>
     </footer>
   )

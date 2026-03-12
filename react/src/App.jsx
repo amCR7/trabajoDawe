@@ -8,8 +8,8 @@ import Carrito from './componentes/carrito'
 import Pie from './componentes/pie'
 
 function App() {
-
   const [estaOnline, setEstaOnline] = useState(navigator.onLine)
+  const [carritoAbierto, setCarritoAbierto] = useState(false)
 
   useEffect(() => {
     const activarOnline = () => setEstaOnline(true)
@@ -28,20 +28,26 @@ function App() {
     <div className="app-tienda">
       <Cabecera titulo="TecnoManía" />
 
-      <MenuNavegacion estaOnline={estaOnline} />
+      <MenuNavegacion
+        estaOnline={estaOnline}
+        onAbrirCarrito={() => setCarritoAbierto(true)}
+      />
 
-      <main className="contenido-principal">
-        <section className="zona-productos">
-          <EscaparateProductos />
-        </section>
-
+      <div className="contenido-principal">
         <aside className="zona-lateral">
           <FormularioNuevosProductos />
-          <Carrito />
         </aside>
-      </main>
+
+        <main className="zona-productos">
+          <EscaparateProductos />
+        </main>
+      </div>
 
       <Pie texto="© 2026 TecnoManía" />
+
+      {carritoAbierto && (
+        <Carrito onCerrar={() => setCarritoAbierto(false)} />
+      )}
     </div>
   )
 }

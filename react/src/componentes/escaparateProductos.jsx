@@ -16,6 +16,18 @@ function EscaparateProductos() {
       .replace(/[\u0300-\u036f]/g, '')
   }
 
+  function shortDescription(texto, palabras = 3) {
+    if (!texto) return ''
+
+    const partes = texto.trim().split(/\s+/)
+
+    if (partes.length <= palabras) {
+      return texto
+    }
+
+    return partes.slice(0, palabras).join(' ') + '...'
+  }
+
   const productosFiltrados = useMemo(() => {
     const textoBusqueda = normalizarTexto(busqueda.trim())
 
@@ -29,10 +41,10 @@ function EscaparateProductos() {
   }, [productos, busqueda])
 
   const totalPaginas = Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA) || 1
-  const indiceInicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA
-  const indiceFin = indiceInicio + PRODUCTOS_POR_PAGINA
+  const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA
+  const fin = inicio + PRODUCTOS_POR_PAGINA
 
-  const productosPagina = productosFiltrados.slice(indiceInicio, indiceFin)
+  const productosPagina = productosFiltrados.slice(inicio, fin)
 
   function manejarBusqueda(evento) {
     setBusqueda(evento.target.value)
@@ -49,34 +61,55 @@ function EscaparateProductos() {
 
   return (
     <section className="escaparate-productos">
-      <h2>Catálogo de productos</h2>
+      <div className="cabecera-catalogo">
+        <h2 className="titulo-productos">Todos los productos</h2>
 
-      <div className="bloque-buscador">
-        <input
-          type="text"
-          placeholder="Buscar por nombre..."
-          value={busqueda}
-          onChange={manejarBusqueda}
-        />
+        <div className="zona-controles-catalogo">
+          <input
+            className="input-buscador"
+            type="text"
+            placeholder="Buscar por nombre"
+            value={busqueda}
+            onChange={manejarBusqueda}
+          />
+        </div>
       </div>
 
-      <div className="rejilla-productos">
+      <hr />
+
+      <div className="grid-productos-react">
         {productosPagina.length > 0 ? (
           productosPagina.map((producto) => (
-            <article key={producto.id} className="tarjeta-producto">
+            <article key={producto.id} className="card-producto-react">
+              <button className="btn-carrito-card" type="button">
+                🛒
+              </button>
+
+              <button className="btn-favorito-card" type="button">
+                {producto.favorito ? '❤️' : '🤍'}
+              </button>
+
               <img
                 src={producto.imagen}
                 alt={producto.nombre}
-                className="imagen-producto"
+                className="imagen-producto-react"
               />
 
-              <h3>{producto.nombre}</h3>
+              <div className="cuerpo-card-producto">
+                <h3 className="nombre-producto-react">{producto.nombre}</h3>
 
-              <p>{producto.descripcion}</p>
+                <p className="descripcion-producto-react">
+                  {shortDescription(producto.descripcion, 3)}
+                </p>
 
-              <p className="precio-producto">
-                {producto.precio} {DIVISA}
-              </p>
+                <div className="precio-producto-react">
+                  {producto.precio} {DIVISA}
+                </div>
+
+                <small className="extra-producto-react">
+                  {producto.extra}
+                </small>
+              </div>
             </article>
           ))
         ) : (
@@ -84,25 +117,27 @@ function EscaparateProductos() {
         )}
       </div>
 
-      <div className="info-paginacion">
+      <div className="info-paginacion-react">
         Mostrando {productosPagina.length} de {productosFiltrados.length}
       </div>
 
-      <div className="paginacion">
-        <button onClick={irPaginaAnterior} disabled={paginaActual === 1}>
-          Anterior
-        </button>
+      <div className="contenedor-paginacion-react">
+        <div className="paginacion-react">
+          <button onClick={irPaginaAnterior} disabled={paginaActual === 1}>
+            Anterior
+          </button>
 
-        <span>
-          Página {paginaActual} de {totalPaginas}
-        </span>
+          <span>
+            Página {paginaActual} de {totalPaginas}
+          </span>
 
-        <button
-          onClick={irPaginaSiguiente}
-          disabled={paginaActual === totalPaginas || productosFiltrados.length === 0}
-        >
-          Siguiente
-        </button>
+          <button
+            onClick={irPaginaSiguiente}
+            disabled={paginaActual === totalPaginas || productosFiltrados.length === 0}
+          >
+            Siguiente
+          </button>
+        </div>
       </div>
     </section>
   )
