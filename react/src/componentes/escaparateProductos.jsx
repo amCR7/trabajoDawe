@@ -1,10 +1,16 @@
 import { useMemo, useState } from 'react'
-import { productosIniciales, DIVISA } from '../tienda'
+import {
+  productosIniciales,
+  DIVISA,
+  MAX_COPIAS,
+  getCantidadProductoEnCarrito
+} from '../tienda'
 
-function EscaparateProductos() {
+function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
   const [productos] = useState(productosIniciales)
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
+  const [mensajesPorProducto, setMensajesPorProducto] = useState({})
 
   const PRODUCTOS_POR_PAGINA = 6
 
@@ -28,6 +34,34 @@ function EscaparateProductos() {
     return partes.slice(0, palabras).join(' ') + '...'
   }
 
+  function mostrarMensajeEnCard(idProducto, texto) {
+    setMensajesPorProducto((previo) => ({
+      ...previo,
+      [idProducto]: texto
+    }))
+
+    setTimeout(() => {
+      setMensajesPorProducto((previo) => {
+        const copia = { ...previo }
+        delete copia[idProducto]
+        return copia
+      })
+    }, 1500)
+  }
+
+  function manejarAgregarCarrito(producto) {
+    const resultado = onAgregarAlCarrito(producto)
+
+    if (resultado?.ok) {
+      mostrarMensajeEnCard(producto.id, 'Añadido al carrito ✅')
+    } else if (resultado?.maximoAlcanzado) {
+      mostrarMensajeEnCard(
+        producto.id,
+        `No se permiten más de ${MAX_COPIAS} copias.`
+      )
+    }
+  }
+
   const productosFiltrados = useMemo(() => {
     const textoBusqueda = normalizarTexto(busqueda.trim())
 
@@ -40,10 +74,11 @@ function EscaparateProductos() {
     )
   }, [productos, busqueda])
 
-  const totalPaginas = Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA) || 1
+  const totalPaginas =
+    Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA) || 1
+
   const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA
   const fin = inicio + PRODUCTOS_POR_PAGINA
-
   const productosPagina = productosFiltrados.slice(inicio, fin)
 
   function manejarBusqueda(evento) {
@@ -79,39 +114,70 @@ function EscaparateProductos() {
 
       <div className="grid-productos-react">
         {productosPagina.length > 0 ? (
-          productosPagina.map((producto) => (
-            <article key={producto.id} className="card-producto-react">
-              <button className="btn-carrito-card" type="button">
-                🛒
-              </button>
+          productosPagina.map((producto) => {
+            const cantidadEnCarrito = getCantidadProductoEnCarrito(
+              carrito,
+              producto.id
+            )
 
-              <button className="btn-favorito-card" type="button">
-                {producto.favorito ? '❤️' : '🤍'}
-              </button>
+            const deshabilitado = cantidadEnCarrito >= MAX_COPIAS
 
-              <img
-                src={producto.imagen}
-                alt={producto.nombre}
-                className="imagen-producto-react"
-              />
+            return (
+              <article key={producto.id} className="card-producto-react">
+                <button
+                  className="btn-carrito-card"
+                  type="button"
+                  onClick={() => manejarAgregarCarrito(producto)}
+                  disabled={deshabilitado}
+                  title={
+                    deshabilitado
+                      ? `Máximo ${MAX_COPIAS} copias alcanzado`
+                      : 'Añadir al carrito'
+                  }
+                >
+                  🛒
+                </button>
 
-              <div className="cuerpo-card-producto">
-                <h3 className="nombre-producto-react">{producto.nombre}</h3>
+                <button className="btn-favorito-card" type="button">
+                  {producto.favorito ? '❤️' : '🤍'}
+                </button>
 
-                <p className="descripcion-producto-react">
-                  {shortDescription(producto.descripcion, 3)}
-                </p>
+                <img
+                  src={producto.imagen}
+                  alt={producto.nombre}
+                  className="imagen-producto-react"
+                />
 
-                <div className="precio-producto-react">
-                  {producto.precio} {DIVISA}
+                <div className="cuerpo-card-producto">
+                  <h3 className="nombre-producto-react">{producto.nombre}</h3>
+
+                  <p className="descripcion-producto-react">
+                    {shortDescription(producto.descripcion, 3)}
+                  </p>
+
+                  <div className="precio-producto-react">
+                    {producto.precio} {DIVISA}
+                  </div>
+
+                  <small className="extra-producto-react">
+                    {producto.extra}
+                  </small>
+
+                  {cantidadEnCarrito > 0 && (
+                    <small className="cantidad-en-carrito-react">
+                      En carrito: {cantidadEnCarrito}
+                    </small>
+                  )}
+
+                  {mensajesPorProducto[producto.id] && (
+                    <div className="mensaje-carrito-card-react">
+                      {mensajesPorProducto[producto.id]}
+                    </div>
+                  )}
                 </div>
-
-                <small className="extra-producto-react">
-                  {producto.extra}
-                </small>
-              </div>
-            </article>
-          ))
+              </article>
+            )
+          })
         ) : (
           <p>No hay productos que coincidan con la búsqueda.</p>
         )}
@@ -133,7 +199,9 @@ function EscaparateProductos() {
 
           <button
             onClick={irPaginaSiguiente}
-            disabled={paginaActual === totalPaginas || productosFiltrados.length === 0}
+            disabled={
+              paginaActual === totalPaginas || productosFiltrados.length === 0
+            }
           >
             Siguiente
           </button>
