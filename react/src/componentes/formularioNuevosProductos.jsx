@@ -2,18 +2,24 @@ import { useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 
 function FormularioNuevosProductos() {
+
   /*Esto sustituye a:
   FileReader
   dragover
   drop
   dragleave
   */
+
+  //ESTADOS PARA LA IMAGEN
   const [file, setFile] = useState(null); //Guarda archivo que sube usuario
   const [dragging, setDragging] = useState(false); //Detecta si usuairo esta arrastrando archivo encima
   const [preview, setPreview] = useState(null); //Guarda URL de la imagen para mostrar preview
 
+  //ESTADOS DEL TIPO DE PRODUCTO
   const [tipoProducto, setTipoProducto] = useState(""); //Tipo seleccionado
   const [valorExtra, setValorExtra] = useState(""); //Valor campo extra dinámico
+
+  //CONFIGURACIÓN DE CAMPOS EXTRA SEGÚN EL TIPO DE PRODUCTO
   const camposExtra = {
     televisor: { label: "Años de garantía", type: "number", placeholder: "Ej: 2" },
     smartphone: { label: "Sistema Operativo", type: "text", placeholder: "Ej: Android 14, iOS 17" },
@@ -22,11 +28,13 @@ function FormularioNuevosProductos() {
     videojuego: { label: "Plataforma/Generación", type: "text", placeholder: "Ej: PS5, Xbox Series X, Nintendo Switch" },
   };
 
+  //ESTADOS DEL FORMULARIO
   const [nombre, setNombre] = useState("");
   const [precio, setPrecio] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [mensaje, setMensaje] = useState("");
 
+  //GESTIONAR CAMBIO DE IMAGEN
   const handleChange = (file) => {
     if (!file) return;
   
@@ -39,31 +47,38 @@ function FormularioNuevosProductos() {
     }
   };
 
+  //GESTIONAR ENVÍO DEL FORMULARIO
   const handleSubmit = (e) => {
     e.preventDefault();
   
+    //VALIDAR TIPO DE PRODUCTO
     if (!tipoProducto) {
       setMensaje("Debes seleccionar un tipo de producto");
       return;
     }
   
+    //VALIDAR NOMBRE
     if (!nombre.trim()) {
       setMensaje("El nombre es obligatorio");
       return;
     }
   
+    //VALIDAR PRECIO
     if (!precio || parseFloat(precio) <= 0) {
       setMensaje("El precio debe ser un número positivo");
       return;
     }
   
+    //VALIDAR CAMPO EXTRA
     if (tipoProducto && !valorExtra.trim()) {
       setMensaje(`El campo ${camposExtra[tipoProducto].label} es obligatorio`);
       return;
     }
   
+    //CREAR IMAGEN DEL PRODUCTO
     const imagenSrc = file ? URL.createObjectURL(file) : "imagenes/default-product.png";
   
+    //CREAR OBJETO DEL NUEVO PRODUCTO (POR DEFECTO)
     const nuevoProducto = {
       tipo: tipoProducto,
       nombre,
@@ -120,6 +135,7 @@ function FormularioNuevosProductos() {
         </div>
       )}
 
+      {/* Campo nombre */}
       <div className="mb-3">
         <label className="form-label">Nombre</label>
         <input
@@ -131,6 +147,7 @@ function FormularioNuevosProductos() {
         />
       </div>
 
+      {/* Campo precio */}
       <div className="mb-3">
         <label className="form-label">Precio</label>
         <input
@@ -144,6 +161,7 @@ function FormularioNuevosProductos() {
         />
       </div>
 
+      {/* Campo descripción */}
       <div className="mb-3">
         <label className="form-label">Descripción</label>
         <textarea
@@ -154,7 +172,7 @@ function FormularioNuevosProductos() {
         />
       </div>
 
-
+      {/*SUBIDA DE IMAGEN CON DRAG & DROP*/}
       <FileUploader
         handleChange={handleChange}
         name="file"
@@ -171,8 +189,10 @@ function FormularioNuevosProductos() {
         </div>
       </FileUploader>
 
+      {/*MENSAJE DEL FORMULARIO*/}
       {mensaje && <div className="small mt-2">{mensaje}</div>}
 
+      {/*BOTÓN AÑADIR PRODUCTO*/}
       <button type="submit" className="btn btn-primary w-100 mt-3">
         Añadir producto
       </button>

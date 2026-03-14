@@ -8,9 +8,14 @@ function Carrito({
   onEliminarProducto,
   onVaciarCarrito
 }) {
+
+  //CALCULAR TOTAL DEL CARRITO
   const total = getTotalCarrito(carrito)
+
+  //GUARDAR AVISOS TEMPORALES POR PRODUCTO
   const [avisos, setAvisos] = useState({})
 
+  //MOSTRAR AVISO TEMPORAL EN UN PRODUCTO DEL CARRITO
   function mostrarAviso(idProducto, texto) {
     setAvisos((previo) => ({
       ...previo,
@@ -26,6 +31,7 @@ function Carrito({
     }, 1500)
   }
 
+  //GESTIONAR CAMBIO DE CANTIDAD ESCRIBIENDO EN EL INPUT
   function manejarCambioCantidad(idProducto, valor) {
     const cantidadNumerica = Number(valor)
 
@@ -43,6 +49,7 @@ function Carrito({
     onCambiarCantidad(idProducto, cantidadNumerica)
   }
 
+  //CONTROLAR FLECHAS DEL TECLADO EN EL INPUT
   function manejarKeyDownInput(evento, producto) {
     if (evento.key === 'ArrowUp' && producto.cantidad >= MAX_COPIAS) {
       evento.preventDefault()
@@ -58,6 +65,7 @@ function Carrito({
     }
   }
 
+  //CONTROLAR CLIC EN LAS FLECHAS DEL INPUT NUMBER
   function manejarPointerDownSpinner(evento, producto) {
     const input = evento.currentTarget
     const rect = input.getBoundingClientRect()
@@ -85,6 +93,8 @@ function Carrito({
   return (
     <div className="overlay-carrito">
       <div className="panel-carrito">
+
+        {/*CABECERA DEL CARRITO*/}
         <div className="cabecera-carrito">
           <h2>Carrito de la compra</h2>
           <button onClick={onCerrar} type="button">
@@ -92,26 +102,32 @@ function Carrito({
           </button>
         </div>
 
+        {/*CONTENIDO DEL CARRITO*/}
         <div className="contenido-carrito">
           {carrito.length === 0 ? (
             <p>El carrito está vacío.</p>
           ) : (
             <>
+              {/*LISTA DE PRODUCTOS DEL CARRITO*/}
               <div className="lista-carrito">
                 {carrito.map((producto) => (
                   <article key={producto.id} className="item-carrito-react">
+
+                    {/*IMAGEN DEL PRODUCTO*/}
                     <img
                       src={producto.imagen}
                       alt={producto.nombre}
                       className="imagen-item-carrito"
                     />
 
+                    {/*DATOS DEL PRODUCTO*/}
                     <div className="datos-item-carrito">
                       <h3>{producto.nombre}</h3>
                       <p>
                         {producto.precio} {DIVISA}
                       </p>
 
+                      {/*CONTROLES DE CANTIDAD Y BORRADO*/}
                       <div className="controles-item-carrito">
                         <label htmlFor={`cantidad-${producto.id}`}>
                           Cantidad:
@@ -140,12 +156,14 @@ function Carrito({
                         </button>
                       </div>
 
+                      {/*MOSTRAR AVISO DE MÁXIMO DE COPIAS*/}
                       {avisos[producto.id] && (
                         <div className="aviso-max-copias-react">
                           {avisos[producto.id]}
                         </div>
                       )}
 
+                      {/*SUBTOTAL DEL PRODUCTO*/}
                       <div className="subtotal-item-carrito">
                         Subtotal: {(producto.precio * producto.cantidad).toFixed(2)}{' '}
                         {DIVISA}
@@ -157,6 +175,7 @@ function Carrito({
 
               <hr />
 
+              {/*PIE DEL CARRITO*/}
               <div className="pie-carrito">
                 <h3>
                   Total: {total.toFixed(2)} {DIVISA}

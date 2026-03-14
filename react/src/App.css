@@ -1,3 +1,4 @@
+/* APP GENERAL */
 .app-tienda {
   width: 90%;
   margin: 0 auto;
@@ -19,7 +20,7 @@
   font-weight: bold;
 }
 
-/* NAV */
+/* MENÚ DE NAVEGACIÓN */
 .menu-navegacion {
   background: rgba(252, 249, 249, 0.35);
   display: flex;
@@ -50,28 +51,26 @@
   font-weight: bold;
 }
 
-/* CONTENIDO */
+/* CONTENIDO PRINCIPAL */
 .contenido-principal {
   flex: 1;
   display: flex;
   gap: 1rem;
   padding: 1rem;
-}
-
-/* ASIDE */
-.zona-lateral {
-  width: 300px;
   background: rgba(0, 0, 0, 0.25);
   border-radius: 8px;
+}
+
+/* ZONA LATERAL */
+.zona-lateral {
+  width: 300px;
   align-self: flex-start;
   padding: 1rem;
 }
 
-/* MAIN */
+/* ZONA DE PRODUCTOS */
 .zona-productos {
   flex: 1;
-  background: rgba(0, 0, 0, 0.20);
-  border-radius: 8px;
   padding: 1rem;
 }
 
@@ -79,7 +78,7 @@
   border-color: rgba(255, 255, 255, 0.25);
 }
 
-/* FOOTER */
+/* PIE DE PÁGINA */
 .pie-pagina {
   background: rgba(0, 0, 0, 0.6);
   text-align: center;
@@ -90,7 +89,7 @@
   margin: 0;
 }
 
-/* ESCAPARATE */
+/* ESCAPARATE DE PRODUCTOS */
 .escaparate-productos {
   width: 100%;
   color: white;
@@ -120,7 +119,7 @@
   font-size: 1rem;
 }
 
-/* GRID PRODUCTOS */
+/* GRID DE PRODUCTOS */
 .grid-productos-react {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -233,6 +232,7 @@
   cursor: not-allowed;
 }
 
+/* CARRITO */
 .overlay-carrito {
   position: fixed;
   inset: 0;
@@ -358,6 +358,7 @@
   cursor: pointer;
 }
 
+/* MENSAJES Y ESTADOS VISUALES */
 .cantidad-en-carrito-react {
   display: block;
   margin-top: 8px;
