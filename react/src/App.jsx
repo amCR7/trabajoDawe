@@ -13,10 +13,19 @@ import {
 } from './tienda'
 
 function App() {
+  //ESTADO DE CONEXIÓN ONLINE/OFFLINE
   const [estaOnline, setEstaOnline] = useState(navigator.onLine)
+
+  //ESTADO PARA ABRIR O CERRAR EL PANEL DEL CARRITO
   const [carritoAbierto, setCarritoAbierto] = useState(false)
+
+  //ESTADO PRINCIPAL DEL CARRITO (SE CARGA DESDE LOCALSTORAGE)
   const [carrito, setCarrito] = useState(() => cargarCarrito())
 
+  //FORMULARIO DESHABILITADO SOLO SI NO HAY CONEXIÓN
+  const formularioDeshabilitado = !estaOnline
+
+  //DETECTAR CAMBIOS DE CONEXIÓN A INTERNET
   useEffect(() => {
     const activarOnline = () => setEstaOnline(true)
     const activarOffline = () => setEstaOnline(false)
@@ -30,26 +39,31 @@ function App() {
     }
   }, [])
 
+  //GUARDAR CARRITO EN LOCALSTORAGE CUANDO CAMBIE
   useEffect(() => {
     guardarCarritoCompleto(carrito)
   }, [carrito])
 
+  //AÑADIR PRODUCTO AL CARRITO
   function agregarAlCarrito(producto) {
     let resultado = { ok: true, maximoAlcanzado: false }
 
     setCarrito((previo) => {
       const existente = previo.find((item) => item.id === producto.id)
 
+      //SI EL PRODUCTO NO ESTÁ EN EL CARRITO
       if (!existente) {
         resultado = { ok: true, maximoAlcanzado: false }
         return [...previo, { ...producto, cantidad: 1 }]
       }
 
+      //SI YA ALCANZÓ EL MÁXIMO DE COPIAS
       if (existente.cantidad >= MAX_COPIAS) {
         resultado = { ok: false, maximoAlcanzado: true }
         return previo
       }
 
+      //SI EL PRODUCTO YA EXISTE, AUMENTAR CANTIDAD
       resultado = { ok: true, maximoAlcanzado: false }
 
       return previo.map((item) =>
@@ -62,14 +76,17 @@ function App() {
     return resultado
   }
 
+  //CAMBIAR CANTIDAD DE UN PRODUCTO DEL CARRITO
   function cambiarCantidadProducto(idProducto, nuevaCantidad) {
     setCarrito((previo) => {
       const cantidadNumerica = Number(nuevaCantidad)
 
+      //SI LA CANTIDAD ES 0 O INVÁLIDA, SE ELIMINA EL PRODUCTO
       if (!Number.isFinite(cantidadNumerica) || cantidadNumerica <= 0) {
         return previo.filter((item) => item.id !== idProducto)
       }
 
+      //ACTUALIZAR CANTIDAD LIMITADA ENTRE 1 Y MAX_COPIAS
       return previo.map((item) =>
         item.id === idProducto
           ? {
@@ -81,28 +98,37 @@ function App() {
     })
   }
 
+  //ELIMINAR PRODUCTO DEL CARRITO
   function eliminarDelCarrito(idProducto) {
     setCarrito((previo) => previo.filter((item) => item.id !== idProducto))
   }
 
+  //VACIAR COMPLETAMENTE EL CARRITO
   function vaciarCarrito() {
     setCarrito([])
   }
 
   return (
     <div className="app-tienda">
+      {/*CABECERA DE LA APLICACIÓN*/}
       <Cabecera titulo="TecnoManía" />
 
+      {/*MENÚ DE NAVEGACIÓN*/}
       <MenuNavegacion
         estaOnline={estaOnline}
         onAbrirCarrito={() => setCarritoAbierto(true)}
       />
 
+      {/*CONTENIDO PRINCIPAL*/}
       <div className="contenido-principal">
+        {/*FORMULARIO PARA AÑADIR PRODUCTOS*/}
         <aside className="zona-lateral">
-          <FormularioNuevosProductos />
+          <FormularioNuevosProductos
+            deshabilitado={formularioDeshabilitado}
+          />
         </aside>
 
+        {/*ESCAPARATE DE PRODUCTOS*/}
         <main className="zona-productos">
           <EscaparateProductos
             carrito={carrito}
@@ -111,8 +137,10 @@ function App() {
         </main>
       </div>
 
+      {/*PIE DE PÁGINA*/}
       <Pie texto="© 2026 TecnoManía" />
 
+      {/*PANEL LATERAL DEL CARRITO*/}
       {carritoAbierto && (
         <Carrito
           carrito={carrito}

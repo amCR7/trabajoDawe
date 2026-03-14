@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 
-function FormularioNuevosProductos() {
-
+function FormularioNuevosProductos({ deshabilitado }) {
   /*Esto sustituye a:
   FileReader
   dragover
@@ -36,13 +35,14 @@ function FormularioNuevosProductos() {
 
   //GESTIONAR CAMBIO DE IMAGEN
   const handleChange = (file) => {
+    if (deshabilitado) return;
     if (!file) return;
   
     const url = URL.createObjectURL(file);
     setPreview(url);
     setFile(file);
 
-    if (file) { //liberar URL
+    if (preview) { //liberar URL
       URL.revokeObjectURL(preview);
     }
   };
@@ -50,6 +50,7 @@ function FormularioNuevosProductos() {
   //GESTIONAR ENVÍO DEL FORMULARIO
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (deshabilitado) return;
   
     //VALIDAR TIPO DE PRODUCTO
     if (!tipoProducto) {
@@ -111,6 +112,7 @@ function FormularioNuevosProductos() {
         value={tipoProducto}
         onChange={(e) => setTipoProducto(e.target.value)}
         required
+        disabled={deshabilitado}
       >
         <option value="">Escoge un tipo</option>
         <option value="televisor">Televisor</option>
@@ -131,6 +133,7 @@ function FormularioNuevosProductos() {
             value={valorExtra}
             onChange={(e) => setValorExtra(e.target.value)}
             required
+            disabled={deshabilitado}
           />
         </div>
       )}
@@ -144,6 +147,7 @@ function FormularioNuevosProductos() {
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
           required
+          disabled={deshabilitado}
         />
       </div>
 
@@ -158,6 +162,7 @@ function FormularioNuevosProductos() {
           value={precio}
           onChange={(e) => setPrecio(e.target.value)}
           required
+          disabled={deshabilitado}
         />
       </div>
 
@@ -169,6 +174,7 @@ function FormularioNuevosProductos() {
           rows="3"
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
+          disabled={deshabilitado}
         />
       </div>
 
@@ -177,15 +183,23 @@ function FormularioNuevosProductos() {
         handleChange={handleChange}
         name="file"
         types={["JPG", "JPEG", "PNG"]}
-        onDraggingStateChange={(drag) => setDragging(drag)} //cuando usuario arrastra archivo drag es true
+        onDraggingStateChange={(drag) => !deshabilitado && setDragging(drag)} //cuando usuario arrastra archivo drag es true
+        disabled={deshabilitado}
       >
-        <div className={`drag-drop-area ${preview ? "preview added" : ""}`}>
+        <div
+          className={`drag-drop-area ${preview ? "preview added" : ""} ${deshabilitado ? "drag-drop-disabled" : ""}`}
+        >
           {preview ? (
             <img src={preview} alt="preview" /> //si hay preview, muestra
           ) : (
-            dragging && <p className="m-0">Suelta la imagen</p>//si no hay preview, comprueba si esta arrastrando archivo
+            <p className="m-0">
+              {deshabilitado
+                ? "Subida deshabilitada"
+                : dragging
+                ? "Suelta la imagen"
+                : "Arrastra una imagen aquí o haz clic"}
+            </p>
           )}
-  
         </div>
       </FileUploader>
 
@@ -193,10 +207,13 @@ function FormularioNuevosProductos() {
       {mensaje && <div className="small mt-2">{mensaje}</div>}
 
       {/*BOTÓN AÑADIR PRODUCTO*/}
-      <button type="submit" className="btn btn-primary w-100 mt-3">
+      <button
+        type="submit"
+        className="btn btn-primary w-100 mt-3"
+        disabled={deshabilitado}
+      >
         Añadir producto
       </button>
-  
     </form>
   );
 }

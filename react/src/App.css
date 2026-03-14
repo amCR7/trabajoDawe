@@ -391,3 +391,24 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* FORMULARIO DESHABILITADO */
+.formulario-productos .form-control:disabled,
+.formulario-productos .form-select:disabled {
+  background-color: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+/* DRAG & DROP DESHABILITADO */
+.drag-drop-disabled {
+  background: #e9ecef !important;
+  border: 2px dashed #ced4da !important;
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.drag-drop-disabled p {
+  color: #6c757d;
+}
