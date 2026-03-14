@@ -7,13 +7,17 @@ import {
 } from '../tienda'
 
 function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
+
+  //ESTADOS PRINCIPALES DEL COMPONENTE
   const [productos] = useState(productosIniciales)
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
   const [mensajesPorProducto, setMensajesPorProducto] = useState({})
 
+  //CONFIGURACIÓN PAGINACIÓN
   const PRODUCTOS_POR_PAGINA = 6
 
+  //NORMALIZAR TEXTO PARA BUSCADOR
   function normalizarTexto(texto) {
     return (texto ?? '')
       .toString()
@@ -22,6 +26,7 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
       .replace(/[\u0300-\u036f]/g, '')
   }
 
+  //ACORTAR DESCRIPCIÓN DEL PRODUCTO
   function shortDescription(texto, palabras = 3) {
     if (!texto) return ''
 
@@ -34,6 +39,7 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
     return partes.slice(0, palabras).join(' ') + '...'
   }
 
+  //MOSTRAR MENSAJE TEMPORAL EN LA CARD
   function mostrarMensajeEnCard(idProducto, texto) {
     setMensajesPorProducto((previo) => ({
       ...previo,
@@ -49,6 +55,7 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
     }, 1500)
   }
 
+  //GESTIONAR AÑADIR PRODUCTO AL CARRITO
   function manejarAgregarCarrito(producto) {
     const resultado = onAgregarAlCarrito(producto)
 
@@ -62,6 +69,7 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
     }
   }
 
+  //FILTRAR PRODUCTOS SEGÚN BUSCADOR
   const productosFiltrados = useMemo(() => {
     const textoBusqueda = normalizarTexto(busqueda.trim())
 
@@ -74,6 +82,18 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
     )
   }, [productos, busqueda])
 
+  //MOSTRAR MENSAJE BUSCADOR
+  const tituloDinamico = useMemo(() => {
+    const textoLimpio = busqueda.trim()
+
+    if (textoLimpio === '') {
+      return 'Todos los productos'
+    }
+
+    return `Buscando: ${textoLimpio}`
+  }, [busqueda])
+
+  //CÁLCULO DE PAGINACIÓN
   const totalPaginas =
     Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA) || 1
 
@@ -81,23 +101,28 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
   const fin = inicio + PRODUCTOS_POR_PAGINA
   const productosPagina = productosFiltrados.slice(inicio, fin)
 
+  //EVENTO BUSCADOR
   function manejarBusqueda(evento) {
     setBusqueda(evento.target.value)
     setPaginaActual(1)
   }
 
+  //BOTÓN PÁGINA ANTERIOR
   function irPaginaAnterior() {
     setPaginaActual((previa) => Math.max(previa - 1, 1))
   }
 
+  //BOTÓN PÁGINA SIGUIENTE
   function irPaginaSiguiente() {
     setPaginaActual((previa) => Math.min(previa + 1, totalPaginas))
   }
 
   return (
     <section className="escaparate-productos">
+
+      {/*CABECERA CATÁLOGO*/}
       <div className="cabecera-catalogo">
-        <h2 className="titulo-productos">Todos los productos</h2>
+        <h2 className="titulo-productos">{tituloDinamico}</h2>
 
         <div className="zona-controles-catalogo">
           <input
@@ -112,18 +137,24 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
 
       <hr />
 
+      {/*GRID PRODUCTOS*/}
       <div className="grid-productos-react">
         {productosPagina.length > 0 ? (
           productosPagina.map((producto) => {
+
+            //CANTIDAD ACTUAL EN CARRITO
             const cantidadEnCarrito = getCantidadProductoEnCarrito(
               carrito,
               producto.id
             )
 
+            //DESACTIVAR BOTÓN SI SE ALCANZA EL MÁXIMO
             const deshabilitado = cantidadEnCarrito >= MAX_COPIAS
 
             return (
               <article key={producto.id} className="card-producto-react">
+
+                {/*BOTÓN CARRITO*/}
                 <button
                   className="btn-carrito-card"
                   type="button"
@@ -138,16 +169,19 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
                   🛒
                 </button>
 
+                {/*BOTÓN FAVORITO*/}
                 <button className="btn-favorito-card" type="button">
                   {producto.favorito ? '❤️' : '🤍'}
                 </button>
 
+                {/*IMAGEN PRODUCTO*/}
                 <img
                   src={producto.imagen}
                   alt={producto.nombre}
                   className="imagen-producto-react"
                 />
 
+                {/*CUERPO CARD*/}
                 <div className="cuerpo-card-producto">
                   <h3 className="nombre-producto-react">{producto.nombre}</h3>
 
@@ -163,12 +197,14 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
                     {producto.extra}
                   </small>
 
+                  {/*MOSTRAR CANTIDAD EN CARRITO*/}
                   {cantidadEnCarrito > 0 && (
                     <small className="cantidad-en-carrito-react">
                       En carrito: {cantidadEnCarrito}
                     </small>
                   )}
 
+                  {/*MENSAJE DENTRO DE LA CARD*/}
                   {mensajesPorProducto[producto.id] && (
                     <div className="mensaje-carrito-card-react">
                       {mensajesPorProducto[producto.id]}
@@ -183,10 +219,12 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
         )}
       </div>
 
+      {/*INFO PAGINACIÓN*/}
       <div className="info-paginacion-react">
         Mostrando {productosPagina.length} de {productosFiltrados.length}
       </div>
 
+      {/*CONTROLES PAGINACIÓN*/}
       <div className="contenedor-paginacion-react">
         <div className="paginacion-react">
           <button onClick={irPaginaAnterior} disabled={paginaActual === 1}>
@@ -207,6 +245,7 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
           </button>
         </div>
       </div>
+
     </section>
   )
 }
