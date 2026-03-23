@@ -9,7 +9,7 @@ import {
 function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
 
   //ESTADOS PRINCIPALES DEL COMPONENTE
-  const [productos] = useState(productosIniciales)
+  //const [productos] = useState(productosIniciales)
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
   const [mensajesPorProducto, setMensajesPorProducto] = useState({})
