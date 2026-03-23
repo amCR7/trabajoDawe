@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 
-function FormularioNuevosProductos({ deshabilitado }) {
+function FormularioNuevosProductos({ onNuevoProducto, deshabilitado}) {
   /*Esto sustituye a:
   FileReader
   dragover
@@ -86,12 +86,16 @@ function FormularioNuevosProductos({ deshabilitado }) {
       precio: parseFloat(precio),
       descripcion: descripcion || "Sin descripción",
       imagen: imagenSrc,
-      valorExtra
+      extra: valorExtra
     };
   
     console.log("Producto añadido:", nuevoProducto);
+    onNuevoProducto(nuevoProducto);
   
     setMensaje("Producto añadido correctamente");
+    setTimeout(() => {
+      setMensaje("");
+    }, 2000);
   
     // Resetear formulario
     setNombre("");
@@ -105,27 +109,34 @@ function FormularioNuevosProductos({ deshabilitado }) {
   
   return (
     <form className="formulario-productos" onSubmit={handleSubmit}>
-      <h2>Nuevo producto</h2>
-      {/* Select tipo de producto */}
-      <select
-        className="form-select mb-3"
-        value={tipoProducto}
-        onChange={(e) => setTipoProducto(e.target.value)}
-        required
-        disabled={deshabilitado}
-      >
-        <option value="">Escoge un tipo</option>
-        <option value="televisor">Televisor</option>
-        <option value="smartphone">Smartphone</option>
-        <option value="audio">Audio (altavoz / auriculares)</option>
-        <option value="accesorio">Accesorio</option>
-        <option value="videojuego">Videojuego</option>
-      </select>
+      <h2 className="mb-3">Añadir producto</h2>
+
+      {/* Tipo de producto */}
+      <div className="mb-3">
+        <label className="form-label">Tipo de producto</label>
+
+        <select
+          className="form-select"
+          value={tipoProducto}
+          onChange={(e) => setTipoProducto(e.target.value)}
+          required
+        >
+          <option value="">Escoge un tipo</option>
+          <option value="televisor">Televisor</option>
+          <option value="smartphone">Smartphone</option>
+          <option value="audio">Audio (altavoz / auriculares)</option>
+          <option value="accesorio">Accesorio</option>
+          <option value="videojuego">Videojuego</option>
+        </select>
+      </div>
 
       {/* Campo extra dinámico */}
       {tipoProducto && camposExtra[tipoProducto] && (
         <div className="mb-3">
-          <label className="form-label">{camposExtra[tipoProducto].label}</label>
+          <label className="form-label">
+            {camposExtra[tipoProducto].label}
+          </label>
+
           <input
             type={camposExtra[tipoProducto].type}
             className="form-control"
@@ -171,14 +182,14 @@ function FormularioNuevosProductos({ deshabilitado }) {
         <label className="form-label">Descripción</label>
         <textarea
           className="form-control"
-          rows="3"
           value={descripcion}
           onChange={(e) => setDescripcion(e.target.value)}
           disabled={deshabilitado}
         />
       </div>
 
-      {/*SUBIDA DE IMAGEN CON DRAG & DROP*/}
+    <div className="mb-3">
+      <label className="form-label">Imagen</label>
       <FileUploader
         handleChange={handleChange}
         name="file"
@@ -186,8 +197,9 @@ function FormularioNuevosProductos({ deshabilitado }) {
         onDraggingStateChange={(drag) => !deshabilitado && setDragging(drag)} //cuando usuario arrastra archivo drag es true
         disabled={deshabilitado}
       >
+
         <div
-          className={`drag-drop-area ${preview ? "preview added" : ""} ${deshabilitado ? "drag-drop-disabled" : ""}`}
+          className={`drag-drop-area ${preview ? "preview added" : ""} ${deshabilitado ? "drag-drop-disabled" : ""} ${dragging ? "drag-over" : ""}`}
         >
           {preview ? (
             <img src={preview} alt="preview" /> //si hay preview, muestra
@@ -200,16 +212,16 @@ function FormularioNuevosProductos({ deshabilitado }) {
                 : "Arrastra una imagen aquí o haz clic"}
             </p>
           )}
-        </div>
+          </div>
       </FileUploader>
+      </div>
 
-      {/*MENSAJE DEL FORMULARIO*/}
       {mensaje && <div className="small mt-2">{mensaje}</div>}
 
       {/*BOTÓN AÑADIR PRODUCTO*/}
       <button
         type="submit"
-        className="btn btn-primary w-100 mt-3"
+        className="btn-submit-producto"
         disabled={deshabilitado}
       >
         Añadir producto

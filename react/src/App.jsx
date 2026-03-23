@@ -19,6 +19,12 @@ function App() {
   //ESTADO PARA ABRIR O CERRAR EL PANEL DEL CARRITO
   const [carritoAbierto, setCarritoAbierto] = useState(false)
 
+  const [productos, setProductos] = useState([])
+  
+  const agregarProducto = (producto) => {
+    setProductos([...productos, producto])
+  }
+
   //ESTADO PRINCIPAL DEL CARRITO (SE CARGA DESDE LOCALSTORAGE)
   const [carrito, setCarrito] = useState(() => cargarCarrito())
 
@@ -123,14 +129,16 @@ function App() {
       <div className="contenido-principal">
         {/*FORMULARIO PARA AÑADIR PRODUCTOS*/}
         <aside className="zona-lateral">
-          <FormularioNuevosProductos
-            deshabilitado={formularioDeshabilitado}
+          <FormularioNuevosProductos 
+            onNuevoProducto={agregarProducto}
+            onAgregarAlCarrito={agregarAlCarrito}
           />
         </aside>
 
         {/*ESCAPARATE DE PRODUCTOS*/}
         <main className="zona-productos">
-          <EscaparateProductos
+          <EscaparateProductos 
+            productos={productos}
             carrito={carrito}
             onAgregarAlCarrito={agregarAlCarrito}
           />

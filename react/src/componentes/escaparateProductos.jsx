@@ -6,7 +6,7 @@ import {
   getCantidadProductoEnCarrito
 } from '../tienda'
 
-function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
+function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
 
   //ESTADOS PRINCIPALES DEL COMPONENTE
   const [productos] = useState(productosIniciales)
@@ -16,6 +16,7 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
 
   //CONFIGURACIÓN PAGINACIÓN
   const PRODUCTOS_POR_PAGINA = 6
+  const todosLosProductos = [...productosIniciales, ...productos]
 
   //NORMALIZAR TEXTO PARA BUSCADOR
   function normalizarTexto(texto) {
@@ -74,10 +75,10 @@ function EscaparateProductos({ carrito, onAgregarAlCarrito }) {
     const textoBusqueda = normalizarTexto(busqueda.trim())
 
     if (textoBusqueda === '') {
-      return productos
+      return todosLosProductos
     }
 
-    return productos.filter((producto) =>
+    return todosLosProductos.filter((producto) =>
       normalizarTexto(producto.nombre).includes(textoBusqueda)
     )
   }, [productos, busqueda])
