@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { productosIniciales, DIVISA } from '../tienda'
 
-function EscaparateProductos() {
-  const [productos] = useState(productosIniciales)
+function EscaparateProductos({ productos }) {
   const [busqueda, setBusqueda] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
 
   const PRODUCTOS_POR_PAGINA = 6
+  const todosLosProductos = [...productosIniciales, ...productos]
 
   function normalizarTexto(texto) {
     return (texto ?? '')
@@ -32,10 +32,10 @@ function EscaparateProductos() {
     const textoBusqueda = normalizarTexto(busqueda.trim())
 
     if (textoBusqueda === '') {
-      return productos
+      return todosLosProductos
     }
 
-    return productos.filter((producto) =>
+    return todosLosProductos.filter((producto) =>
       normalizarTexto(producto.nombre).includes(textoBusqueda)
     )
   }, [productos, busqueda])

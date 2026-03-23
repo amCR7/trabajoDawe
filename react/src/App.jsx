@@ -10,6 +10,11 @@ import Pie from './componentes/pie'
 function App() {
   const [estaOnline, setEstaOnline] = useState(navigator.onLine)
   const [carritoAbierto, setCarritoAbierto] = useState(false)
+  const [productos, setProductos] = useState([])
+  
+  const agregarProducto = (producto) => {
+    setProductos([...productos, producto])
+  }
 
   useEffect(() => {
     const activarOnline = () => setEstaOnline(true)
@@ -35,11 +40,11 @@ function App() {
 
       <div className="contenido-principal">
         <aside className="zona-lateral">
-          <FormularioNuevosProductos />
+          <FormularioNuevosProductos onNuevoProducto={agregarProducto} />
         </aside>
 
         <main className="zona-productos">
-          <EscaparateProductos />
+          <EscaparateProductos productos={productos} />
         </main>
       </div>
 
