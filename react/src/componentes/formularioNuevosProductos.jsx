@@ -120,6 +120,7 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado}) {
           value={tipoProducto}
           onChange={(e) => setTipoProducto(e.target.value)}
           required
+          disabled={deshabilitado}
         >
           <option value="">Escoge un tipo</option>
           <option value="televisor">Televisor</option>

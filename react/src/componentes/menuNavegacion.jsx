@@ -1,4 +1,4 @@
-function MenuNavegacion({ estaOnline, onAbrirCarrito }) {
+function MenuNavegacion({ estaOnline, onAbrirCarrito, onMostrarFavoritos, onMostrarTodos, mostrarFavoritos }) {
   return (
     <nav className="menu-navegacion">
 
@@ -6,7 +6,18 @@ function MenuNavegacion({ estaOnline, onAbrirCarrito }) {
       <ul className="menu-enlaces">
 
         {/*ENLACE INICIO*/}
-        <li><a href="#">Inicio</a></li>
+        <li>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              onMostrarTodos()
+            }}
+            style={!mostrarFavoritos ? { fontWeight: 'bold' } : {}}
+          >
+            Inicio
+          </a>
+        </li>
 
         {/*ENLACE PARA ABRIR EL CARRITO*/}
         <li>
@@ -21,7 +32,18 @@ function MenuNavegacion({ estaOnline, onAbrirCarrito }) {
           </a>
         </li>
         {/*ENLACE FAVORITOS*/}
-        <li><a href="#">Favoritos</a></li>
+        <li>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              onMostrarFavoritos()
+            }}
+            style={mostrarFavoritos ? { fontWeight: 'bold' } : {}}
+          >
+            Favoritos
+          </a>
+        </li>
       </ul>
 
       {/*MENSAJE SI NO HAY CONEXIÓN*/}

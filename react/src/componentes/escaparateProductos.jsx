@@ -10,13 +10,28 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
 
   //ESTADOS PRINCIPALES DEL COMPONENTE
   //const [productos] = useState(productosIniciales)
+  
+  //ESTADOS PARA FILTROS
   const [busqueda, setBusqueda] = useState('')
+  const [categoria, setCategoria] = useState('')
+  const [orden, setOrden] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
   const [mensajesPorProducto, setMensajesPorProducto] = useState({})
+
+  //ESTADO PARA EL MODAL
+  const [productoModal, setProductoModal] = useState(null)
 
   //CONFIGURACIÓN PAGINACIÓN
   const PRODUCTOS_POR_PAGINA = 6
   const todosLosProductos = [...productosIniciales, ...productos]
+
+  // Función para obtener la categoría del producto
+  function obtenerCategoriaProducto(producto) {
+    if (producto.categoria === 'electrodomestico') {
+      return 'electrodomesticos'
+    }
+    return producto.categoria
+  }
 
   //NORMALIZAR TEXTO PARA BUSCADOR
   function normalizarTexto(texto) {
@@ -70,73 +85,201 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
     }
   }
 
-  //FILTRAR PRODUCTOS SEGÚN BUSCADOR
-  const productosFiltrados = useMemo(() => {
-    const textoBusqueda = normalizarTexto(busqueda.trim())
+  // ABRIR MODAL CON DESCRIPCIÓN EXTENDIDA
+  function abrirModal(producto) {
+    setProductoModal(producto)
+  }
 
-    if (textoBusqueda === '') {
-      return todosLosProductos
+  // CERRAR MODAL
+  function cerrarModal() {
+    setProductoModal(null)
+  }
+
+  // CATEGORÍAS DISPONIBLES
+  const categoriasDisponibles = [
+    { valor: 'electrodomesticos', nombre: 'Electrodomésticos' },
+    { valor: 'smartphone', nombre: 'Smartphones' },
+    { valor: 'audio', nombre: 'Audio' },
+    { valor: 'videojuego', nombre: 'Videojuegos' },
+    { valor: 'accesorio', nombre: 'Accesorios' }
+  ]
+
+  // OPCIONES DE ORDEN
+  const opcionesOrden = [
+    { valor: 'nombre_asc', nombre: 'Nombre (A-Z)' },
+    { valor: 'nombre_desc', nombre: 'Nombre (Z-A)' },
+    { valor: 'precio_asc', nombre: 'Precio (menor a mayor)' },
+    { valor: 'precio_desc', nombre: 'Precio (mayor a menor)' }
+  ]
+
+  // FILTRAR Y ORDENAR PRODUCTOS
+  const productosFiltrados = useMemo(() => {
+    let resultado = [...todosLosProductos]
+
+    // 1. FILTRAR POR CATEGORÍA
+    if (categoria && categoria !== '') {
+      resultado = resultado.filter(p => {
+        const catProducto = obtenerCategoriaProducto(p)
+        return catProducto === categoria
+      })
     }
 
-    return todosLosProductos.filter((producto) =>
-      normalizarTexto(producto.nombre).includes(textoBusqueda)
-    )
-  }, [productos, busqueda])
+    // 2. FILTRAR POR BÚSQUEDA
+    const textoBusqueda = normalizarTexto(busqueda.trim())
+    if (textoBusqueda !== '') {
+      resultado = resultado.filter((producto) =>
+        normalizarTexto(producto.nombre).includes(textoBusqueda)
+      )
+    }
 
-  //MOSTRAR MENSAJE BUSCADOR
+    // 3. ORDENAR
+    if (orden && orden !== '') {
+      switch (orden) {
+        case 'precio_asc':
+          resultado.sort((a, b) => a.precio - b.precio)
+          break
+        case 'precio_desc':
+          resultado.sort((a, b) => b.precio - a.precio)
+          break
+        case 'nombre_asc':
+          resultado.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }))
+          break
+        case 'nombre_desc':
+          resultado.sort((a, b) => b.nombre.localeCompare(a.nombre, 'es', { sensitivity: 'base' }))
+          break
+        default:
+          break
+      }
+    }
+
+    return resultado
+  }, [productos, busqueda, categoria, orden])
+
+  //TÍTULO DINÁMICO
   const tituloDinamico = useMemo(() => {
     const textoLimpio = busqueda.trim()
-
-    if (textoLimpio === '') {
-      return 'Todos los productos'
+    if (textoLimpio !== '') {
+      return `Buscando: ${textoLimpio}`
     }
-
-    return `Buscando: ${textoLimpio}`
-  }, [busqueda])
+    if (categoria && categoria !== '') {
+      const catNombre = categoriasDisponibles.find(c => c.valor === categoria)?.nombre
+      return catNombre
+    }
+    return 'Todos los productos'
+  }, [busqueda, categoria])
 
   //CÁLCULO DE PAGINACIÓN
   const totalPaginas =
     Math.ceil(productosFiltrados.length / PRODUCTOS_POR_PAGINA) || 1
-
   const inicio = (paginaActual - 1) * PRODUCTOS_POR_PAGINA
   const fin = inicio + PRODUCTOS_POR_PAGINA
   const productosPagina = productosFiltrados.slice(inicio, fin)
+  const paginaActualAjustada = Math.min(paginaActual, totalPaginas)
 
-  //EVENTO BUSCADOR
-  function manejarBusqueda(evento) {
-    setBusqueda(evento.target.value)
+  // Resetear página cuando cambian los filtros
+  function resetearPagina() {
     setPaginaActual(1)
   }
 
-  //BOTÓN PÁGINA ANTERIOR
+  //EVENTOS
+  function manejarBusqueda(evento) {
+    setBusqueda(evento.target.value)
+    resetearPagina()
+  }
+
+  function manejarCambioCategoria(evento) {
+    setCategoria(evento.target.value)
+    resetearPagina()
+  }
+
+  function manejarCambioOrden(evento) {
+    setOrden(evento.target.value)
+    resetearPagina()
+  }
+
+  //BOTÓN PAGINACIÓN
   function irPaginaAnterior() {
     setPaginaActual((previa) => Math.max(previa - 1, 1))
   }
 
-  //BOTÓN PÁGINA SIGUIENTE
   function irPaginaSiguiente() {
     setPaginaActual((previa) => Math.min(previa + 1, totalPaginas))
   }
 
   return (
+    <>
     <section className="escaparate-productos">
 
-      {/*CABECERA CATÁLOGO*/}
-      <div className="cabecera-catalogo">
-        <h2 className="titulo-productos">{tituloDinamico}</h2>
+      {/*CABECERA CATÁLOGO - TÍTULO IZQUIERDA, FILTROS DERECHA EN HORIZONTAL*/}
+      <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap',
+          marginBottom: '20px'
+        }}>
+          <h2 className="titulo-productos" style={{ margin: 0 }}>{tituloDinamico}</h2>
 
-        <div className="zona-controles-catalogo">
-          <input
-            className="input-buscador"
-            type="text"
-            placeholder="Buscar por nombre"
-            value={busqueda}
-            onChange={manejarBusqueda}
-          />
+          {/* CONTENEDOR DE FILTROS EN HORIZONTAL */}
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'row',
+            gap: '12px', 
+            alignItems: 'center',
+            flexWrap: 'wrap'
+          }}>
+            {/* Selector de categoría */}
+            <select
+              value={categoria}
+              onChange={manejarCambioCategoria}
+              style={{ 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #ddd',
+                fontSize: '14px'
+              }}
+            >
+              <option value="">-- Filtro Categoría --</option>
+              {categoriasDisponibles.map(cat => (
+                <option key={cat.valor} value={cat.valor}>{cat.nombre}</option>
+              ))}
+            </select>
+
+            {/* Selector de orden */}
+            <select
+              value={orden}
+              onChange={manejarCambioOrden}
+              style={{ 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #ddd',
+                fontSize: '14px'
+              }}
+            >
+              <option value="">-- Filtro Orden --</option>
+              {opcionesOrden.map(opt => (
+                <option key={opt.valor} value={opt.valor}>{opt.nombre}</option>
+              ))}
+            </select>
+
+            {/* Buscador */}
+            <input
+              type="text"
+              placeholder="Buscar por nombre"
+              value={busqueda}
+              onChange={manejarBusqueda}
+              style={{ 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #ddd',
+                fontSize: '14px',
+                minWidth: '200px'
+              }}
+            />
+          </div>
         </div>
-      </div>
 
-      <hr />
+        <hr />
 
       {/*GRID PRODUCTOS*/}
       <div className="grid-productos-react">
@@ -180,6 +323,8 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
                   src={producto.imagen}
                   alt={producto.nombre}
                   className="imagen-producto-react"
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => abrirModal(producto)}
                 />
 
                 {/*CUERPO CARD*/}
@@ -216,7 +361,7 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
             )
           })
         ) : (
-          <p>No hay productos que coincidan con la búsqueda.</p>
+          <p>No hay productos que coincidan con los filtros seleccionados.</p>
         )}
       </div>
 
@@ -248,6 +393,26 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
       </div>
 
     </section>
+
+    {/* MODAL PARA DESCRIPCIÓN EXTENDIDA */}
+    {productoModal && (
+      <>
+        <div className="product-overlay" onClick={cerrarModal}></div>
+        <div className="product-modal">
+          <div className="modal-image">
+            <img src={productoModal.imagen} alt={productoModal.nombre} />
+          </div>
+          <div className="modal-details">
+            <span className="close-modal" onClick={cerrarModal}>&times;</span>
+            <h3>{productoModal.nombre}</h3>
+            <div className="price">{productoModal.precio} {DIVISA}</div>
+            <div className="extra">{productoModal.extra}</div>
+            <div className="description">{productoModal.descripcion}</div>
+          </div>
+        </div>
+      </>
+    )}
+  </>
   )
 }
 

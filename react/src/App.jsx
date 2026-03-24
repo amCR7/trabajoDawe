@@ -19,8 +19,10 @@ function App() {
   //ESTADO PARA ABRIR O CERRAR EL PANEL DEL CARRITO
   const [carritoAbierto, setCarritoAbierto] = useState(false)
 
+  //PRODUCTOS
   const [productos, setProductos] = useState([])
-  
+
+  //AGREGAR LOS PRODUCTOS DEL FORMULARIO
   const agregarProducto = (producto) => {
     setProductos([...productos, producto])
   }
@@ -30,6 +32,9 @@ function App() {
 
   //FORMULARIO DESHABILITADO SOLO SI NO HAY CONEXIÓN
   const formularioDeshabilitado = !estaOnline
+
+  //VISTA FAVORITOS
+  const [mostrarFavoritos, setMostrarFavoritos] = useState(false)
 
   //DETECTAR CAMBIOS DE CONEXIÓN A INTERNET
   useEffect(() => {
@@ -114,6 +119,11 @@ function App() {
     setCarrito([])
   }
 
+  //CAMBIAR A LA PÁGINA DE FAVORITOS
+  function toggleMostrarFavoritos() {
+    setMostrarFavoritos(prev => !prev)
+  }
+
   return (
     <div className="app-tienda">
       {/*CABECERA DE LA APLICACIÓN*/}
@@ -123,6 +133,9 @@ function App() {
       <MenuNavegacion
         estaOnline={estaOnline}
         onAbrirCarrito={() => setCarritoAbierto(true)}
+        onMostrarFavoritos={toggleMostrarFavoritos}
+        onMostrarTodos={() => setMostrarFavoritos(false)}
+        mostrarFavoritos={mostrarFavoritos}
       />
 
       {/*CONTENIDO PRINCIPAL*/}
@@ -132,6 +145,7 @@ function App() {
           <FormularioNuevosProductos 
             onNuevoProducto={agregarProducto}
             onAgregarAlCarrito={agregarAlCarrito}
+            deshabilitado={formularioDeshabilitado}
           />
         </aside>
 
@@ -141,6 +155,7 @@ function App() {
             productos={productos}
             carrito={carrito}
             onAgregarAlCarrito={agregarAlCarrito}
+            mostrarSoloFavoritos={mostrarFavoritos}
           />
         </main>
       </div>
