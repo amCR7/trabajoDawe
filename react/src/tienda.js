@@ -185,3 +185,31 @@ export function getCantidadProductoEnCarrito(carrito, idProducto) {
   const item = carrito.find((producto) => producto.id === idProducto)
   return item ? item.cantidad : 0
 }
+
+export function obtenerCategoriaProducto(producto) {
+  const nombreClase = producto.constructor?.name || ''
+  
+  switch (nombreClase) {
+    case 'ProductoElectrodomestico':
+      return 'electrodomestico'
+    case 'ProductoSmartphone':
+      return 'smartphone'
+    case 'ProductoAudio':
+      return 'audio'
+    case 'ProductoAccesorio':
+      return 'accesorio'
+    case 'ProductoVideojuego':
+      return 'videojuego'
+    default:
+      return 'general'
+  }
+}
+
+// Función para obtener todas las categorías únicas
+export function obtenerCategoriasUnicas(productos) {
+  const categorias = new Set()
+  productos.forEach(prod => {
+    categorias.add(obtenerCategoriaProducto(prod))
+  })
+  return Array.from(categorias).sort()
+}

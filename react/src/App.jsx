@@ -25,6 +25,8 @@ function App() {
   //FORMULARIO DESHABILITADO SOLO SI NO HAY CONEXIÓN
   const formularioDeshabilitado = !estaOnline
 
+  const [mostrarFavoritos, setMostrarFavoritos] = useState(false)
+
   //DETECTAR CAMBIOS DE CONEXIÓN A INTERNET
   useEffect(() => {
     const activarOnline = () => setEstaOnline(true)
@@ -108,6 +110,11 @@ function App() {
     setCarrito([])
   }
 
+  // También añade la función para cambiar la vista
+  function toggleMostrarFavoritos() {
+    setMostrarFavoritos(prev => !prev)
+  }
+
   return (
     <div className="app-tienda">
       {/*CABECERA DE LA APLICACIÓN*/}
@@ -117,6 +124,9 @@ function App() {
       <MenuNavegacion
         estaOnline={estaOnline}
         onAbrirCarrito={() => setCarritoAbierto(true)}
+        onMostrarFavoritos={toggleMostrarFavoritos}
+        onMostrarTodos={() => setMostrarFavoritos(false)}
+        mostrarFavoritos={mostrarFavoritos}
       />
 
       {/*CONTENIDO PRINCIPAL*/}
@@ -133,6 +143,7 @@ function App() {
           <EscaparateProductos
             carrito={carrito}
             onAgregarAlCarrito={agregarAlCarrito}
+            mostrarSoloFavoritos={mostrarFavoritos}
           />
         </main>
       </div>

@@ -1,33 +1,47 @@
-function MenuNavegacion({ estaOnline, onAbrirCarrito }) {
+function MenuNavegacion({ estaOnline, onAbrirCarrito, onMostrarFavoritos, onMostrarTodos, mostrarFavoritos }) {
   return (
     <nav className="menu-navegacion">
-
-      {/*ENLACES DEL MENÚ*/}
       <ul className="menu-enlaces">
-
-        {/*ENLACE INICIO*/}
-        <li><a href="#">Inicio</a></li>
-
-        {/*ENLACE PARA ABRIR EL CARRITO*/}
+        <li>
+          <a 
+            href="#" 
+            onClick={(e) => {
+              e.preventDefault()
+              if (onMostrarTodos) onMostrarTodos()
+            }}
+            style={!mostrarFavoritos ? { fontWeight: 'bold' } : {}}
+          >
+            Inicio
+          </a>
+        </li>
         <li>
           <a
             href="#"
             onClick={(e) => {
-              e.preventDefault() //evita recargar la página
-              onAbrirCarrito() //abre el panel del carrito
+              e.preventDefault()
+              onAbrirCarrito()
             }}
           >
             Carrito
           </a>
         </li>
-        {/*ENLACE FAVORITOS*/}
-        <li><a href="#">Favoritos</a></li>
+        <li>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              if (onMostrarFavoritos) onMostrarFavoritos()
+            }}
+            style={mostrarFavoritos ? { fontWeight: 'bold', color: '#dc3545' } : {}}
+          >
+            {mostrarFavoritos ? '❤️' : '🤍'} Favoritos
+          </a>
+        </li>
       </ul>
 
-      {/*MENSAJE SI NO HAY CONEXIÓN*/}
       {!estaOnline && (
         <div className="mensaje-offline">
-          Estás offline
+          ⚠️ Estás offline
         </div>
       )}
     </nav>
