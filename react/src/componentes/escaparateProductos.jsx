@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   productosIniciales,
   DIVISA,
@@ -6,7 +6,7 @@ import {
   getCantidadProductoEnCarrito
 } from '../tienda'
 
-function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
+function EscaparateProductos({ productos, carrito, onAgregarAlCarrito, mostrarSoloFavoritos, onToggleFavorito }) {
 
   //ESTADOS PRINCIPALES DEL COMPONENTE
   //const [productos] = useState(productosIniciales)
@@ -16,6 +16,7 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
   const [categoria, setCategoria] = useState('')
   const [orden, setOrden] = useState('')
   const [paginaActual, setPaginaActual] = useState(1)
+  
   const [mensajesPorProducto, setMensajesPorProducto] = useState({})
 
   //ESTADO PARA EL MODAL
@@ -23,7 +24,6 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
 
   //CONFIGURACIÓN PAGINACIÓN
   const PRODUCTOS_POR_PAGINA = 6
-  const todosLosProductos = [...productosIniciales, ...productos]
 
   // Función para obtener la categoría del producto
   function obtenerCategoriaProducto(producto) {
@@ -114,7 +114,12 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
 
   // FILTRAR Y ORDENAR PRODUCTOS
   const productosFiltrados = useMemo(() => {
-    let resultado = [...todosLosProductos]
+    let resultado = [...productos]
+
+    // FILTRAR SOLO FAVORITOS
+    if (mostrarSoloFavoritos) {
+      resultado = resultado.filter(p => p.favorito)
+    }
 
     // 1. FILTRAR POR CATEGORÍA
     if (categoria && categoria !== '') {
@@ -153,20 +158,41 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
     }
 
     return resultado
-  }, [productos, busqueda, categoria, orden])
+  }, [productos, busqueda, categoria, orden, mostrarSoloFavoritos])
 
   //TÍTULO DINÁMICO
   const tituloDinamico = useMemo(() => {
+    
+    const partes = []
     const textoLimpio = busqueda.trim()
+    
+    //BUSCADOR
     if (textoLimpio !== '') {
       return `Buscando: ${textoLimpio}`
     }
+
+    //FAVORITOS
+    if (mostrarSoloFavoritos) {
+      partes.push('Favoritos')
+    }
+
+    //CATEGORIA
     if (categoria && categoria !== '') {
       const catNombre = categoriasDisponibles.find(c => c.valor === categoria)?.nombre
-      return catNombre
+      if (catNombre) partes.push(catNombre)
     }
-    return 'Todos los productos'
-  }, [busqueda, categoria])
+
+    //ORDEN
+    if (orden && orden !== '') {
+      const ordenNombre = opcionesOrden.find(o => o.valor === orden)?.nombre
+      if (ordenNombre) partes.push(ordenNombre)
+    }
+    if (partes.length === 0) {
+      return 'Todos los productos'
+    }
+
+    return partes.join(' ⇨ ')
+  }, [busqueda, categoria, mostrarSoloFavoritos, orden])
 
   //CÁLCULO DE PAGINACIÓN
   const totalPaginas =
@@ -205,6 +231,14 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
   function irPaginaSiguiente() {
     setPaginaActual((previa) => Math.min(previa + 1, totalPaginas))
   }
+
+  //ESTO RESETEA LAS COSAS
+  useEffect(() => {
+    setPaginaActual(1)
+    setBusqueda('')
+    setCategoria('')
+    setOrden('')
+  }, [mostrarSoloFavoritos])
 
   return (
     <>
@@ -314,7 +348,11 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
                 </button>
 
                 {/*BOTÓN FAVORITO*/}
-                <button className="btn-favorito-card" type="button">
+                <button
+                  className="btn-favorito-card"
+                  type="button"
+                  onClick={() => onToggleFavorito(producto.id)}
+                >
                   {producto.favorito ? '❤️' : '🤍'}
                 </button>
 
@@ -361,7 +399,7 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito }) {
             )
           })
         ) : (
-          <p>No hay productos que coincidan con los filtros seleccionados.</p>
+          <p>No hay productos favoritos.</p>
         )}
       </div>
 

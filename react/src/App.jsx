@@ -9,7 +9,8 @@ import Pie from './componentes/pie'
 import {
   cargarCarrito,
   guardarCarritoCompleto,
-  MAX_COPIAS
+  MAX_COPIAS,
+  productosIniciales
 } from './tienda'
 
 function App() {
@@ -20,11 +21,22 @@ function App() {
   const [carritoAbierto, setCarritoAbierto] = useState(false)
 
   //PRODUCTOS
-  const [productos, setProductos] = useState([])
+  const [productos, setProductos] = useState(productosIniciales)
 
   //AGREGAR LOS PRODUCTOS DEL FORMULARIO
   const agregarProducto = (producto) => {
     setProductos([...productos, producto])
+  }
+
+  //ALTERNAR FAVORITO
+  function toggleFavorito(idProducto) {
+    setProductos(prev =>
+      prev.map(p =>
+        p.id === idProducto
+          ? { ...p, favorito: !p.favorito }
+          : p
+      )
+    )
   }
 
   //ESTADO PRINCIPAL DEL CARRITO (SE CARGA DESDE LOCALSTORAGE)
@@ -156,6 +168,7 @@ function App() {
             carrito={carrito}
             onAgregarAlCarrito={agregarAlCarrito}
             mostrarSoloFavoritos={mostrarFavoritos}
+            onToggleFavorito={toggleFavorito}
           />
         </main>
       </div>
