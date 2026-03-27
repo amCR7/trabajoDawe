@@ -248,7 +248,7 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
           disabled={deshabilitado}
         >
           <option value="">Escoge un tipo</option>
-          <option value="televisor">Televisor</option>
+          <option value="televisor">Electrodoméstico</option>
           <option value="smartphone">Smartphone</option>
           <option value="audio">Audio (altavoz / auriculares)</option>
           <option value="accesorio">Accesorio</option>
