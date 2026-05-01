@@ -161,6 +161,12 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito, mostrarSo
   }, [productos, busqueda, categoria, orden, mostrarSoloFavoritos])
 
   //TÍTULO DINÁMICO
+  /*
+  Ahorramos memoria
+  Sin useMemo, el título se recalcularía en cada renderizado
+  (sin que los filtros se cambien)
+  con useMemo, solo se recalcula cuando cambian busqueda, categoria, favos u orden
+  */
   const tituloDinamico = useMemo(() => {
     
     const partes = []
@@ -232,7 +238,12 @@ function EscaparateProductos({ productos, carrito, onAgregarAlCarrito, mostrarSo
     setPaginaActual((previa) => Math.min(previa + 1, totalPaginas))
   }
 
-  //ESTO RESETEA LAS COSAS
+  //ESTO RESETEA LAS COSAS (ejecuta acciones/efectos)
+  /*
+  Cuando cambio a favoritos, resetea los filtros y vuelve a pág 1
+  useEffect se dispara cuando hay una acción y ejecuta algo
+  acción ejecutada cuando cambia la variable de los corchetes
+  */
   useEffect(() => {
     setPaginaActual(1)
     setBusqueda('')

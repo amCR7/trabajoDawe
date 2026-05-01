@@ -29,6 +29,11 @@ function App() {
   }
 
   //ALTERNAR FAVORITO
+  /*
+  Antes se accedia directamente al DOM para hacer ek cambio, cada cambio requeria actualizar DOM a mano
+  Ahora solo se modifica el estado del producto y el DOM se actualiza solo con React
+  Crea una nueva versión del estado
+  */
   function toggleFavorito(idProducto) {
     setProductos(prev =>
       prev.map(p =>
@@ -40,7 +45,12 @@ function App() {
   }
 
   //ESTADO PRINCIPAL DEL CARRITO (SE CARGA DESDE LOCALSTORAGE)
+  /*
+  cargarCarrito() lee del localStorage para mantener el carrito entre recargas
+  () => funcion lazy initialization (solo se ejecuta una vez al inicio)
+  */
   const [carrito, setCarrito] = useState(() => cargarCarrito())
+
 
   //FORMULARIO DESHABILITADO SOLO SI NO HAY CONEXIÓN
   const formularioDeshabilitado = !estaOnline

@@ -1,5 +1,8 @@
 import { useRef, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
+/*
+FileUploader es la libreria externa que facilita la subida de archivos (drag and drop)
+*/
 
 function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
   /*Esto sustituye a:
@@ -17,6 +20,10 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
 
   //REFERENCIA AL INPUT FILE INTERNO
   const uploaderRef = useRef(null);
+  /*
+  Guarda un valor que no causa re-renderizaciones
+  En este caso referencia al componente FileUploader para manipularlo
+  */
 
   //ESTADOS DEL TIPO DE PRODUCTO
   const [tipoProducto, setTipoProducto] = useState(""); //Tipo seleccionado
@@ -57,6 +64,7 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
   function limpiarArchivoSeleccionado() {
     if (preview) {
       URL.revokeObjectURL(preview);
+      //Libera URL temporal evitando fugas de memoria
     }
 
     setFile(null);
@@ -140,7 +148,10 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
   };
 
   //GESTIONAR DROP MANUALMENTE PARA DETECTAR VARIOS ARCHIVOS
-  //GESTIONAR DROP MANUALMENTE PARA DETECTAR VARIOS ARCHIVOS
+  /*
+  Esto está hecho así para poder mostrar el mensaje de que no se puede
+  subir más de una foto, sino no se puede
+  */
   const handleDrop = (e) => {
     if (deshabilitado) return;
 
@@ -158,7 +169,7 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
     procesarArchivo(archivo);
   };
 
-  //GESTIONAR SELECCIÓN DESDE EL INPUT FILE
+  //GESTIONAR SELECCIÓN DESDE EL INPUT FILE (clickando cuadrado)
   const handleInputChange = (e) => {
     if (deshabilitado) return;
 

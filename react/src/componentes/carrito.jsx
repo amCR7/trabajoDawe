@@ -14,13 +14,16 @@ function Carrito({
 
   //GUARDAR AVISOS TEMPORALES POR PRODUCTO
   const [avisos, setAvisos] = useState({})
-
+  /*useState guarda el estado
+  avisos = dato actual
+  setAvisos = funcion para cambiar ese valor
+  */
   //MOSTRAR AVISO TEMPORAL EN UN PRODUCTO DEL CARRITO
   function mostrarAviso(idProducto, texto) {
     setAvisos((previo) => ({
       ...previo,
       [idProducto]: texto
-    }))
+    })) //copia anterior y añade uno nuevo
 
     setTimeout(() => {
       setAvisos((previo) => {
@@ -28,7 +31,7 @@ function Carrito({
         delete copia[idProducto]
         return copia
       })
-    }, 1500)
+    }, 1500) //luego lo borra despues de 1.5s
   }
 
   //GESTIONAR CAMBIO DE CANTIDAD ESCRIBIENDO EN EL INPUT
