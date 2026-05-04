@@ -1,15 +1,24 @@
-const express = require("express");
-const cors = require("cors");
+const express = require('express')
+const mongoose = require('mongoose')
+const cors = require('cors')
 
-const app = express();
+const app = express()
 
-app.use(cors());
-app.use(express.json());
+//Middleware
+app.use(cors())
+app.use(express.json())
 
-app.get("/", (req, res) => {
-  res.send("Servidor funcionando");
-});
+//Conexión MongoDB
+mongoose.connect('mongodb://127.0.0.1:27017/tienda')
+  .then(() => console.log('🟢 Conectado a MongoDB'))
+  .catch(err => console.error('🔴 Error conexión MongoDB:', err))
 
-app.listen(5000, () => {
-  console.log("Servidor en http://localhost:5000");
-});
+//Rutas (las creas después)
+app.use('/usuarios', require('./rutas/usuarios'))
+app.use('/productos', require('./rutas/productos'))
+
+//Servidor
+const PORT = 3001
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor en http://localhost:${PORT}`)
+})
