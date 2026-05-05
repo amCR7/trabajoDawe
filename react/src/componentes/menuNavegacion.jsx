@@ -1,42 +1,44 @@
-function MenuNavegacion({ estaOnline, onAbrirCarrito, onMostrarFavoritos, onMostrarTodos, mostrarFavoritos }) {
+function MenuNavegacion({ estaOnline, onAbrirCarrito, onMostrarFavoritos, onMostrarTodos, mostrarFavoritos, usuario, setVista }) {
   return (
     <nav className="menu-navegacion">
-
-      {/*ENLACES DEL MENÚ*/}
+  
       <ul className="menu-enlaces">
-
-        {/*ENLACE INICIO*/}
+  
+        {/*INICIO*/}
         <li>
           <a
             href="#"
             onClick={(e) => {
               e.preventDefault()
-              onMostrarTodos()
+              setVista("inicio")   // 🔥 NUEVO
+              onMostrarTodos()     // lo mantienes
             }}
             style={!mostrarFavoritos ? { fontWeight: 'bold' } : {}}
           >
             Inicio
           </a>
         </li>
-
-        {/*ENLACE PARA ABRIR EL CARRITO*/}
-        <li>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault() //evita recargar la página
-              onAbrirCarrito() //abre el panel del carrito
-            }}
-          >
-            Carrito
-          </a>
-        </li>
-        {/*ENLACE FAVORITOS*/}
+  
+        {/*CARRITO*/}
         <li>
           <a
             href="#"
             onClick={(e) => {
               e.preventDefault()
+              onAbrirCarrito()
+            }}
+          >
+            Carrito
+          </a>
+        </li>
+  
+        {/*FAVORITOS*/}
+        <li>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setVista("inicio")   // 🔥 para que siga mostrando productos
               onMostrarFavoritos()
             }}
             style={mostrarFavoritos ? { fontWeight: 'bold' } : {}}
@@ -44,9 +46,51 @@ function MenuNavegacion({ estaOnline, onAbrirCarrito, onMostrarFavoritos, onMost
             Favoritos
           </a>
         </li>
+  
+        {/* 👤 MI CUENTA */}
+        <li>
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault()
+              setVista("cuenta")   // 🔥 NUEVO
+            }}
+          >
+            Mi cuenta
+          </a>
+        </li>
+  
+        {/* 👑 ADMIN */}
+        {usuario?.rol === "admin" && (
+          <>
+            <li>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setVista("anadir")   // 🔥 NUEVO
+                }}
+              >
+                Añadir producto
+              </a>
+            </li>
+  
+            <li>
+              <a
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  setVista("editar")   // 🔥 NUEVO
+                }}
+              >
+                Editar/Borrar productos
+              </a>
+            </li>
+          </>
+        )}
+  
       </ul>
-
-      {/*MENSAJE SI NO HAY CONEXIÓN*/}
+  
       {!estaOnline && (
         <div className="mensaje-offline">
           Estás offline

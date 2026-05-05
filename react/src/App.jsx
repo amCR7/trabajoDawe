@@ -12,6 +12,7 @@ import {
   MAX_COPIAS,
   productosIniciales
 } from './tienda'
+import Login from './componentes/Login'
 
 function App() {
   //ESTADO DE CONEXIÓN ONLINE/OFFLINE
@@ -23,10 +24,16 @@ function App() {
   //PRODUCTOS
   const [productos, setProductos] = useState(productosIniciales)
 
+  //LOGIN
+  const [usuario, setUsuario] = useState(null)
+  const [visitas, setVisitas] = useState(0)
+
   //AGREGAR LOS PRODUCTOS DEL FORMULARIO
   const agregarProducto = (producto) => {
     setProductos([...productos, producto])
   }
+
+  const [vista, setVista] = useState("inicio")
 
   //ALTERNAR FAVORITO
   /*
@@ -146,47 +153,107 @@ function App() {
     setMostrarFavoritos(prev => !prev)
   }
 
+  
+
+  //PEDIR DATOS DE USUARIO
+  useEffect(() => {
+    if (!usuario) return
+  
+    const obtenerUsuario = async () => {
+      try {
+        const res = await fetch("http://localhost:3001/usuario", {
+          credentials: "include"
+        })
+  
+        const data = await res.json()
+  
+        console.log("Usuario sesión:", data)
+  
+        setVisitas(data.visitas) // ✅ separado
+  
+      } catch (error) {
+        console.error("Error al obtener usuario", error)
+      }
+    }
+  
+    obtenerUsuario()
+  }, [usuario]) // 🔥 importante: depende de usuario
+
   return (
     <div className="app-tienda">
-      {/*CABECERA DE LA APLICACIÓN*/}
+  
+      {/*CABECERA*/}
       <Cabecera titulo="TecnoManía" />
-
-      {/*MENÚ DE NAVEGACIÓN*/}
+  
+      {/*MENÚ*/}
       <MenuNavegacion
         estaOnline={estaOnline}
         onAbrirCarrito={() => setCarritoAbierto(true)}
         onMostrarFavoritos={toggleMostrarFavoritos}
         onMostrarTodos={() => setMostrarFavoritos(false)}
         mostrarFavoritos={mostrarFavoritos}
+        usuario={usuario}
+        setVista={setVista}
       />
-
-      {/*CONTENIDO PRINCIPAL*/}
+  
+      {/*CONTENIDO*/}
       <div className="contenido-principal">
-        {/*FORMULARIO PARA AÑADIR PRODUCTOS*/}
+  
+        {/* 🔥 ASIDE = LOGIN / PANEL USUARIO */}
         <aside className="zona-lateral">
-          <FormularioNuevosProductos 
-            onNuevoProducto={agregarProducto}
-            onAgregarAlCarrito={agregarAlCarrito}
-            deshabilitado={formularioDeshabilitado}
-          />
+  
+          {!usuario ? (
+            <Login setUsuario={setUsuario} />
+          ) : (
+            <div>
+              <h3>Mi cuenta</h3>
+              <p>Email: {usuario.email}</p>
+              <p>Rol: {usuario.rol}</p>
+              <p>Visitas: {visitas}</p>
+            </div>
+          )}
+  
         </aside>
-
-        {/*ESCAPARATE DE PRODUCTOS*/}
+  
+        {/* 🔥 MAIN = TIENDA SIEMPRE */}
         <main className="zona-productos">
-          <EscaparateProductos 
-            productos={productos}
-            carrito={carrito}
-            onAgregarAlCarrito={agregarAlCarrito}
-            mostrarSoloFavoritos={mostrarFavoritos}
-            onToggleFavorito={toggleFavorito}
-          />
+          
+          {/* 🟢 INICIO → PRODUCTOS */}
+          {vista === "inicio" && (
+            <EscaparateProductos 
+              productos={productos}
+              carrito={carrito}
+              onAgregarAlCarrito={agregarAlCarrito}
+              mostrarSoloFavoritos={mostrarFavoritos}
+              onToggleFavorito={toggleFavorito}
+            />
+          )}
+
+          {/* 👑 AÑADIR PRODUCTO */}
+          {vista === "anadir" && usuario?.rol === "admin" && (
+            <FormularioNuevosProductos 
+              onNuevoProducto={agregarProducto}
+              onAgregarAlCarrito={agregarAlCarrito}
+              deshabilitado={formularioDeshabilitado}
+            />
+          )}
+
+          {/* 👤 MI CUENTA */}
+          {vista === "cuenta" && (
+            <div>
+              <h2>Mi cuenta</h2>
+              <p>Email: {usuario?.email}</p>
+              <p>Rol: {usuario?.rol}</p>
+              <p>Visitas: {visitas}</p>
+            </div>
+          )}
         </main>
       </div>
-
-      {/*PIE DE PÁGINA*/}
+  
+      {/*PIE*/}
       <Pie texto="© 2026 TecnoManía" />
-
-      {/*PANEL LATERAL DEL CARRITO*/}
+  
+      {/*CARRITO*/}
       {carritoAbierto && (
         <Carrito
           carrito={carrito}
@@ -196,6 +263,7 @@ function App() {
           onVaciarCarrito={vaciarCarrito}
         />
       )}
+  
     </div>
   )
 }
