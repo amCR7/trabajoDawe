@@ -50,25 +50,28 @@ app.post('/login', async (req, res) => {
   const { email } = req.body
 
   try {
-    // 🔍 Buscar usuario en MongoDB
     const usuarioDB = await Usuario.findOne({ email })
 
     if (!usuarioDB) {
       return res.status(404).json({ error: "Usuario no encontrado" })
     }
 
-    // 🧠 Guardar en sesión
+    // 🧠 Guardar sesión completa
     req.session.email = usuarioDB.email
+    req.session.nombre = usuarioDB.nombre
+    req.session.apellido = usuarioDB.apellido
     req.session.rol = usuarioDB.rol
 
-    if (!req.session.visitas) {
-      req.session.visitas = 1
-    }
+    // 🔥 NO reiniciar siempre a 1
+    req.session.visitas = 1
+  
 
     req.session.save(() => {
       res.json({
-        email: req.session.email,
-        rol: req.session.rol,
+        email: usuarioDB.email,
+        nombre: usuarioDB.nombre,
+        apellido: usuarioDB.apellido,
+        rol: usuarioDB.rol,
         visitas: req.session.visitas
       })
     })
@@ -79,21 +82,37 @@ app.post('/login', async (req, res) => {
 })
 
 // ======================
-// PANEL USUARIO (VISITAS)
+// PANEL USUARIO (LECTURA)
 // ======================
 app.get('/usuario', (req, res) => {
-  console.log("COOKIE RECIBIDA:", req.headers.cookie)
-  console.log("SESSION:", req.session)
-
   if (!req.session.email) {
     return res.status(401).json({ error: "No hay sesión activa" })
   }
 
-  req.session.visitas++
+  const ahora = Date.now()
+
+  //Evita doble llamada en milisegundos para no sumar +1 por el REact StrictMode
+  if (!req.session.lastAccess || ahora - req.session.lastAccess > 500) {
+    req.session.visitas = (req.session.visitas || 1) + 1
+    req.session.lastAccess = ahora
+  }
 
   res.json({
     email: req.session.email,
+    nombre: req.session.nombre,
+    apellido: req.session.apellido,
+    rol: req.session.rol,
     visitas: req.session.visitas
+  })
+})
+
+// ======================
+// LOGOUT (CERRAR SESIÓN)
+// ======================
+app.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('connect.sid')
+    res.json({ message: "Sesión cerrada" })
   })
 })
 

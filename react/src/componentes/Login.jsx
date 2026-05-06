@@ -2,7 +2,7 @@ import { useState } from "react"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "../firebase"
 
-export default function Login({ setUsuario }) {
+export default function Login({ setUsuario, setVisitas }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -32,14 +32,19 @@ export default function Login({ setUsuario }) {
       })
   
       const data = await response.json()
+      console.log("DATA BACKEND:", data)
   
       console.log("Sesión creada:", data)
   
       // 🔥 3. AQUÍ VA EL setUsuario (con rol incluido)
       setUsuario({
         email: data.email,
+        nombre: data.nombre,
+        apellido: data.apellido,
         rol: data.rol
       })
+
+      setVisitas(data.visitas)
   
       setError("")
   

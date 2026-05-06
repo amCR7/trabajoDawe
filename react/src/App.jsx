@@ -153,31 +153,46 @@ function App() {
     setMostrarFavoritos(prev => !prev)
   }
 
-  
 
-  //PEDIR DATOS DE USUARIO
+  //MANTENER USUARIO AL REFRESCAR
   useEffect(() => {
-    if (!usuario) return
+    const comprobarSesion = async () => {
+      const res = await fetch("http://localhost:3001/usuario", {
+        credentials: "include"
+      })
   
-    const obtenerUsuario = async () => {
-      try {
-        const res = await fetch("http://localhost:3001/usuario", {
-          credentials: "include"
-        })
+      if (!res.ok) return
   
-        const data = await res.json()
+      const data = await res.json()
   
-        console.log("Usuario sesión:", data)
+      setUsuario({
+        email: data.email,
+        nombre: data.nombre,
+        apellido: data.apellido,
+        rol: data.rol
+      })
   
-        setVisitas(data.visitas) // ✅ separado
-  
-      } catch (error) {
-        console.error("Error al obtener usuario", error)
-      }
+      setVisitas(data.visitas)
     }
   
-    obtenerUsuario()
-  }, [usuario]) // 🔥 importante: depende de usuario
+    comprobarSesion()
+  }, [])
+
+  //LOGOUT
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:3001/logout", {
+        method: "POST",
+        credentials: "include"
+      })
+  
+      setUsuario(null)
+      setVisitas(0)
+  
+    } catch (error) {
+      console.error("Error al cerrar sesión", error)
+    }
+  }
 
   return (
     <div className="app-tienda">
@@ -203,13 +218,20 @@ function App() {
         <aside className="zona-lateral">
   
           {!usuario ? (
-            <Login setUsuario={setUsuario} />
+            <Login setUsuario={setUsuario} setVisitas={setVisitas} />
           ) : (
-            <div>
-              <h3>Mi cuenta</h3>
-              <p>Email: {usuario.email}</p>
-              <p>Rol: {usuario.rol}</p>
-              <p>Visitas: {visitas}</p>
+            <div className="panel-usuario">
+              <h3>Bienvenide,</h3>
+              <p>{usuario.nombre} {usuario.apellido}</p>
+
+              <div className="info-usuario">
+                <p><strong>Rol:</strong> {usuario.rol || "usuario"}</p>
+                <p><strong>Visitas:</strong> {visitas}</p>
+              </div>
+
+              <button onClick={handleLogout}>
+                Cerrar sesión
+              </button>
             </div>
           )}
   
