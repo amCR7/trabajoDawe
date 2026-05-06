@@ -188,7 +188,7 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
   };
 
   //GESTIONAR ENVÍO DEL FORMULARIO
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (deshabilitado) return;
 
@@ -221,7 +221,7 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
 
     //CREAR OBJETO DEL NUEVO PRODUCTO (POR DEFECTO)
     const nuevoProducto = {
-      tipo: tipoProducto,
+      categoria: tipoProducto,
       nombre,
       precio: parseFloat(precio),
       descripcion: descripcion || "Sin descripción",
@@ -230,17 +230,43 @@ function FormularioNuevosProductos({ onNuevoProducto, deshabilitado }) {
     };
 
     console.log("Producto añadido:", nuevoProducto);
-    onNuevoProducto(nuevoProducto);
+    try {
+      const res = await fetch("http://localhost:3001/productos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(nuevoProducto)
+      });
+  
+      const data = await res.json();
+  
+      //ACTUALIZAR FRONTEND CON ID REAL DE MONGO
+      onNuevoProducto({
+        id: data._id,
+        nombre: data.nombre,
+        precio: data.precio,
+        descripcion: data.descripcion,
+        imagen: data.imagen,
+        categoria: data.categoria,
+        extra: data.extra,
+        favorito: data.favorito
+      });
 
-    mostrarMensajeExito("Producto añadido correctamente");
+      mostrarMensajeExito("Producto añadido correctamente");
 
-    // Resetear formulario
-    setNombre("");
-    setPrecio("");
-    setDescripcion("");
-    setTipoProducto("");
-    setValorExtra("");
-    limpiarArchivoSeleccionado();
+      // Resetear formulario
+      setNombre("");
+      setPrecio("");
+      setDescripcion("");
+      setTipoProducto("");
+      setValorExtra("");
+      limpiarArchivoSeleccionado();
+
+    } catch (error) {
+      console.error("Error creando producto:", error);
+      setMensaje("Error al crear producto");
+    }
   };
 
   return (

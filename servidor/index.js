@@ -117,6 +117,22 @@ app.post('/logout', (req, res) => {
 })
 
 // ======================
+// CREAR PRODUCTO
+// ======================
+const Producto = require('./models/Producto')
+
+app.post('/productos', async (req, res) => {
+  try {
+    const nuevoProducto = new Producto(req.body)
+    const guardado = await nuevoProducto.save()
+
+    res.json(guardado)
+  } catch (error) {
+    res.status(500).json({ error: "Error creando producto" })
+  }
+})
+
+// ======================
 // SERVIDOR
 // ======================
 const PORT = 3001
