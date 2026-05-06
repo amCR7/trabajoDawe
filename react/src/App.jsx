@@ -10,7 +10,6 @@ import {
   cargarCarrito,
   guardarCarritoCompleto,
   MAX_COPIAS,
-  productosIniciales
 } from './tienda'
 import Login from './componentes/Login'
 
@@ -21,8 +20,10 @@ function App() {
   //ESTADO PARA ABRIR O CERRAR EL PANEL DEL CARRITO
   const [carritoAbierto, setCarritoAbierto] = useState(false)
 
-  //PRODUCTOS
-  const [productos, setProductos] = useState(productosIniciales)
+  //PRODUCTOS DESDE TIENDA.JS
+  //const [productos, setProductos] = useState(productosIniciales)
+  //PRODUCTOS DESDE MONGODB
+  const [productos, setProductos] = useState([])
 
   //LOGIN
   const [usuario, setUsuario] = useState(null)
@@ -176,6 +177,36 @@ function App() {
     }
   
     comprobarSesion()
+  }, [])
+
+  //CARGAR PRODUCTOS DE MONGODB
+  useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        const res = await fetch("http://localhost:3001/productos")
+        const data = await res.json()
+  
+        console.log("PRODUCTOS BACKEND:", data)
+
+        setProductos(
+          data.map(p => ({
+            id: p._id,
+            nombre: p.nombre,
+            precio: p.precio,
+            descripcion: p.descripcion,
+            imagen: p.imagen,
+            categoria: p.categoria, // 🔥 ya correcto
+            extra: p.extra,
+            favorito: p.favorito ?? false
+          }))
+        )
+  
+      } catch (error) {
+        console.error("Error cargando productos:", error)
+      }
+    }
+  
+    cargarProductos()
   }, [])
 
   //LOGOUT
