@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express')
 const mongoose = require('mongoose')
 const cors = require('cors')
@@ -20,7 +21,7 @@ app.use(express.json())
 app.use(session({
   secret: 'tienda-secreta',
   resave: false,
-  saveUninitialized: false,   // 🔥 IMPORTANTE
+  saveUninitialized: true,   // 🔥 IMPORTANTE
   cookie: {
     secure: false,
     httpOnly: false,
@@ -31,7 +32,7 @@ app.use(session({
 // ======================
 // CONEXIÓN MONGODB
 // ======================
-mongoose.connect('mongodb://127.0.0.1:27017/tienda')
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('🟢 Conectado a MongoDB'))
   .catch(err => console.error('🔴 Error conexión MongoDB:', err))
 
@@ -130,6 +131,10 @@ app.post('/productos', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Error creando producto" })
   }
+})
+
+app.get('/debug-session', (req, res) => {
+  res.json(req.session)
 })
 
 // ======================
