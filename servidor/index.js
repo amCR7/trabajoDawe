@@ -14,8 +14,8 @@ app.use(cors({
   origin: "http://localhost:5173", // cambia si tu React usa otro puerto
   credentials: true
 }))
-
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 // SESIONES (express-session)
 app.use(session({

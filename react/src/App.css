@@ -86,8 +86,8 @@
 .drag-drop-area {
   border: 2px dashed #adb5bd;
   border-radius: 10px;
-  min-height: 200px;  /* AUMENTA de 180px a 200px */
-  padding: 20px;       /* AÑADE padding para más área clickeable */
+  min-height: 200px;
+  padding: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -697,6 +697,266 @@
   line-height: 1.6;
   color: #333;
   margin-top: 10px;
+}
+
+/* ============================================
+   PANEL DE LOGIN / AUTENTICACIÓN
+   ============================================ */
+
+/* Contenedor principal del panel de login */
+.login-panel {
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Cabecera con ícono y título */
+.login-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.75rem;
+}
+
+.login-titulo {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #aaa;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Formulario */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.login-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.login-label {
+  font-size: 0.8rem;
+  color: #ccc;
+  letter-spacing: 0.05em;
+}
+
+.login-input {
+  background-color: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 0.7rem 0.85rem;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.login-input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  background-color: #444;
+}
+
+.login-input::placeholder {
+  color: #888;
+}
+
+/* Mensaje de error */
+.login-error {
+  background-color: rgba(220, 53, 69, 0.2);
+  border: 1px solid #dc3545;
+  color: #ff8a92;
+  padding: 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 0;
+}
+
+/* Botón de autenticación */
+.login-btn {
+  background-color: #555;
+  color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  padding: 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 0.5rem;
+}
+
+.login-btn:hover:not(:disabled) {
+  background-color: #666;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   PANEL USUARIO (autenticado)
+   ============================================ */
+
+.panel-usuario {
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.panel-usuario h3 {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #aaa;
+  margin: 0 0 0.25rem 0;
+  font-weight: 400;
+}
+
+.panel-usuario > p {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  color: #f0f0f0;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.75rem;
+}
+
+.info-usuario {
+  background-color: #3a3a3a;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.info-usuario p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+.info-usuario p:first-child {
+  margin-bottom: 0.5rem;
+}
+
+.info-usuario strong {
+  color: #f0f0f0;
+}
+
+.panel-usuario button {
+  background-color: #555;
+  color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  padding: 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+}
+
+.panel-usuario button:hover {
+  background-color: #666;
+}
+
+/* ============================================
+   SECCIÓN MI CUENTA
+   ============================================ */
+
+.formulario-edicion-cuenta {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.formulario-edicion-cuenta h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.campo-edicion {
+  margin-bottom: 1rem;
+}
+
+.campo-edicion label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #ccc;
+  font-size: 0.85rem;
+}
+
+.campo-edicion input {
+  width: 100%;
+  background-color: #3a3a3a;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 0.7rem;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+}
+
+.campo-edicion input:focus {
+  outline: none;
+  border-color: #0d6efd;
+}
+
+.campo-edicion input:disabled {
+  background-color: #2a2a2a;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.error-mensaje {
+  background-color: rgba(220, 53, 69, 0.2);
+  border: 1px solid #dc3545;
+  color: #ff8a92;
+  padding: 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.btn-guardar {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.btn-guardar:hover:not(:disabled) {
+  background-color: #0b5ed7;
+}
+
+.btn-guardar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* MEDIA QUERIES PARA RESPONSIVE */

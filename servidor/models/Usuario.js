@@ -6,7 +6,10 @@ const usuarioSchema = new mongoose.Schema({
   email: String,
   rol: String,
   visitas: Number,
-  fechaRegistro: String
+  fechaRegistro: String,
+  telefono: String,    
+  direccion: String,   
+  ciudad: String       
 })
 
 module.exports = mongoose.model('Usuario', usuarioSchema)

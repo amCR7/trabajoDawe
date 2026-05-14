@@ -6,76 +6,78 @@ export default function Login({ setUsuario, setVisitas }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
+  const [cargando, setCargando] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    console.log("🔥 FRONT LOGIN CLICK")
-  
+    setCargando(true)
+    setError("")
+
     try {
-      // 1. Firebase login
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      )
-  
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const userEmail = userCredential.user.email
-  
-      // 2. Crear sesión en Express
+
       const response = await fetch("http://localhost:3001/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email: userEmail })
       })
-  
+
       const data = await response.json()
-      console.log("DATA BACKEND:", data)
-  
-      console.log("Sesión creada:", data)
-  
-      // 🔥 3. AQUÍ VA EL setUsuario (con rol incluido)
+
       setUsuario({
         email: data.email,
         nombre: data.nombre,
         apellido: data.apellido,
         rol: data.rol
       })
-
       setVisitas(data.visitas)
-  
-      setError("")
-  
+
     } catch (error) {
-      setError("Login incorrecto")
+      setError("Credenciales incorrectas")
+    } finally {
+      setCargando(false)
     }
   }
 
   return (
-    <div>
-      <h2>Login</h2>
+    <div className="login-panel">
+      <div className="login-header">
+        <h2 className="login-titulo">Inicio de sesión</h2>
+      </div>
 
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <form className="login-form" onSubmit={handleLogin}>
+        <div className="login-campo">
+          <label className="login-label">Email</label>
+          <input
+            className="login-input"
+            type="email"
+            placeholder="tu@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="login-campo">
+          <label className="login-label">Contraseña</label>
+          <input
+            className="login-input"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
-        <button type="submit">Entrar</button>
+        {error && <p className="login-error">{error}</p>}
+
+        <button className="login-btn" type="submit" disabled={cargando}>
+          {cargando ? "Autenticando..." : "Autenticarse"}
+        </button>
       </form>
-
-      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   )
 }

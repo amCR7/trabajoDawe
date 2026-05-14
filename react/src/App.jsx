@@ -6,6 +6,8 @@ import EscaparateProductos from './componentes/escaparateProductos'
 import FormularioNuevosProductos from './componentes/formularioNuevosProductos'
 import Carrito from './componentes/carrito'
 import Pie from './componentes/pie'
+import MiCuenta from './componentes/MiCuenta'
+
 import {
   cargarCarrito,
   guardarCarritoCompleto,
@@ -20,8 +22,6 @@ function App() {
   //ESTADO PARA ABRIR O CERRAR EL PANEL DEL CARRITO
   const [carritoAbierto, setCarritoAbierto] = useState(false)
 
-  //PRODUCTOS DESDE TIENDA.JS
-  //const [productos, setProductos] = useState(productosIniciales)
   //PRODUCTOS DESDE MONGODB
   const [productos, setProductos] = useState([])
 
@@ -37,11 +37,6 @@ function App() {
   const [vista, setVista] = useState("inicio")
 
   //ALTERNAR FAVORITO
-  /*
-  Antes se accedia directamente al DOM para hacer ek cambio, cada cambio requeria actualizar DOM a mano
-  Ahora solo se modifica el estado del producto y el DOM se actualiza solo con React
-  Crea una nueva versión del estado
-  */
   function toggleFavorito(idProducto) {
     setProductos(prev =>
       prev.map(p =>
@@ -53,12 +48,7 @@ function App() {
   }
 
   //ESTADO PRINCIPAL DEL CARRITO (SE CARGA DESDE LOCALSTORAGE)
-  /*
-  cargarCarrito() lee del localStorage para mantener el carrito entre recargas
-  () => funcion lazy initialization (solo se ejecuta una vez al inicio)
-  */
   const [carrito, setCarrito] = useState(() => cargarCarrito())
-
 
   //FORMULARIO DESHABILITADO SOLO SI NO HAY CONEXIÓN
   const formularioDeshabilitado = !estaOnline
@@ -92,19 +82,16 @@ function App() {
     setCarrito((previo) => {
       const existente = previo.find((item) => item.id === producto.id)
 
-      //SI EL PRODUCTO NO ESTÁ EN EL CARRITO
       if (!existente) {
         resultado = { ok: true, maximoAlcanzado: false }
         return [...previo, { ...producto, cantidad: 1 }]
       }
 
-      //SI YA ALCANZÓ EL MÁXIMO DE COPIAS
       if (existente.cantidad >= MAX_COPIAS) {
         resultado = { ok: false, maximoAlcanzado: true }
         return previo
       }
 
-      //SI EL PRODUCTO YA EXISTE, AUMENTAR CANTIDAD
       resultado = { ok: true, maximoAlcanzado: false }
 
       return previo.map((item) =>
@@ -122,12 +109,10 @@ function App() {
     setCarrito((previo) => {
       const cantidadNumerica = Number(nuevaCantidad)
 
-      //SI LA CANTIDAD ES 0 O INVÁLIDA, SE ELIMINA EL PRODUCTO
       if (!Number.isFinite(cantidadNumerica) || cantidadNumerica <= 0) {
         return previo.filter((item) => item.id !== idProducto)
       }
 
-      //ACTUALIZAR CANTIDAD LIMITADA ENTRE 1 Y MAX_COPIAS
       return previo.map((item) =>
         item.id === idProducto
           ? {
@@ -154,10 +139,10 @@ function App() {
     setMostrarFavoritos(prev => !prev)
   }
 
-
   //MANTENER USUARIO AL REFRESCAR
-  useEffect(() => {
-    const comprobarSesion = async () => {
+useEffect(() => {
+  const comprobarSesion = async () => {
+    try {
       const res = await fetch("http://localhost:3001/usuario", {
         credentials: "include"
       })
@@ -170,14 +155,21 @@ function App() {
         email: data.email,
         nombre: data.nombre,
         apellido: data.apellido,
-        rol: data.rol
+        rol: data.rol,
+        fechaRegistro: data.fechaRegistro,
+        telefono: data.telefono,
+        direccion: data.direccion,
+        ciudad: data.ciudad
       })
   
       setVisitas(data.visitas)
+    } catch (error) {
+      console.error("Error comprobando sesión:", error)
     }
+  }
   
-    comprobarSesion()
-  }, [])
+  comprobarSesion()
+}, [])
 
   //CARGAR PRODUCTOS DE MONGODB
   useEffect(() => {
@@ -195,7 +187,7 @@ function App() {
             precio: p.precio,
             descripcion: p.descripcion,
             imagen: p.imagen,
-            categoria: p.categoria, // 🔥 ya correcto
+            categoria: p.categoria,
             extra: p.extra,
             favorito: p.favorito ?? false
           }))
@@ -245,7 +237,7 @@ function App() {
       {/*CONTENIDO*/}
       <div className="contenido-principal">
   
-        {/* 🔥 ASIDE = LOGIN / PANEL USUARIO */}
+        {/* ASIDE = LOGIN / PANEL USUARIO */}
         <aside className="zona-lateral">
   
           {!usuario ? (
@@ -268,10 +260,10 @@ function App() {
   
         </aside>
   
-        {/* 🔥 MAIN = TIENDA SIEMPRE */}
+        {/* MAIN = TIENDA SIEMPRE */}
         <main className="zona-productos">
           
-          {/* 🟢 INICIO → PRODUCTOS */}
+          {/* INICIO → PRODUCTOS */}
           {vista === "inicio" && (
             <EscaparateProductos 
               productos={productos}
@@ -282,7 +274,7 @@ function App() {
             />
           )}
 
-          {/* 👑 AÑADIR PRODUCTO */}
+          {/* AÑADIR PRODUCTO */}
           {vista === "anadir" && usuario?.rol === "admin" && (
             <FormularioNuevosProductos 
               onNuevoProducto={agregarProducto}
@@ -291,15 +283,15 @@ function App() {
             />
           )}
 
-          {/* 👤 MI CUENTA */}
-          {vista === "cuenta" && (
-            <div>
-              <h2>Mi cuenta</h2>
-              <p>Email: {usuario?.email}</p>
-              <p>Rol: {usuario?.rol}</p>
-              <p>Visitas: {visitas}</p>
-            </div>
+          {/* MI CUENTA */}
+          {vista === "cuenta" && usuario && (
+            <MiCuenta 
+              usuario={usuario}
+              setUsuario={setUsuario}
+              estaOnline={estaOnline}
+            />
           )}
+
         </main>
       </div>
   
