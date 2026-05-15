@@ -140,36 +140,36 @@ function App() {
   }
 
   //MANTENER USUARIO AL REFRESCAR
-useEffect(() => {
-  const comprobarSesion = async () => {
-    try {
-      const res = await fetch("http://localhost:3001/usuario", {
-        credentials: "include"
-      })
-  
-      if (!res.ok) return
-  
-      const data = await res.json()
-  
-      setUsuario({
-        email: data.email,
-        nombre: data.nombre,
-        apellido: data.apellido,
-        rol: data.rol,
-        fechaRegistro: data.fechaRegistro,
-        telefono: data.telefono,
-        direccion: data.direccion,
-        ciudad: data.ciudad
-      })
-  
-      setVisitas(data.visitas)
-    } catch (error) {
-      console.error("Error comprobando sesión:", error)
+  useEffect(() => {
+    const comprobarSesion = async () => {
+      try {
+        const res = await fetch("http://localhost:3001/usuario", {
+          credentials: "include"
+        })
+    
+        if (!res.ok) return
+    
+        const data = await res.json()
+    
+        setUsuario({
+          email: data.email,
+          nombre: data.nombre,
+          apellido: data.apellido,
+          rol: data.rol,
+          fechaRegistro: data.fechaRegistro,
+          telefono: data.telefono,
+          direccion: data.direccion,
+          ciudad: data.ciudad
+        })
+    
+        setVisitas(data.visitas)
+      } catch (error) {
+        console.error("Error comprobando sesión:", error)
+      }
     }
-  }
-  
-  comprobarSesion()
-}, [])
+    
+    comprobarSesion()
+  }, [])
 
   //CARGAR PRODUCTOS DE MONGODB
   useEffect(() => {

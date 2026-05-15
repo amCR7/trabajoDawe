@@ -85,26 +85,92 @@ app.post('/login', async (req, res) => {
 // ======================
 // PANEL USUARIO (LECTURA)
 // ======================
-app.get('/usuario', (req, res) => {
+app.get('/usuario', async (req, res) => {
+
   if (!req.session.email) {
-    return res.status(401).json({ error: "No hay sesión activa" })
+    return res.status(401).json({
+      error: "No hay sesión activa"
+    })
   }
 
-  const ahora = Date.now()
+  try {
 
-  //Evita doble llamada en milisegundos para no sumar +1 por el REact StrictMode
-  if (!req.session.lastAccess || ahora - req.session.lastAccess > 500) {
-    req.session.visitas = (req.session.visitas || 1) + 1
-    req.session.lastAccess = ahora
+    const usuarioDB = await Usuario.findOne({
+      email: req.session.email
+    })
+
+    if (!usuarioDB) {
+      return res.status(404).json({
+        error: "Usuario no encontrado"
+      })
+    }
+
+    const ahora = Date.now()
+
+    if (!req.session.lastAccess || ahora - req.session.lastAccess > 500) {
+      req.session.visitas = (req.session.visitas || 1) + 1
+      req.session.lastAccess = ahora
+    }
+
+    res.json({
+      email: usuarioDB.email,
+      nombre: usuarioDB.nombre,
+      apellido: usuarioDB.apellido,
+      rol: usuarioDB.rol,
+      fechaRegistro: usuarioDB.fechaRegistro,
+      telefono: usuarioDB.telefono,
+      direccion: usuarioDB.direccion,
+      ciudad: usuarioDB.ciudad,
+      visitas: req.session.visitas
+    })
+
+  } catch (error) {
+
+    res.status(500).json({
+      error: "Error obteniendo usuario"
+    })
+
   }
+})
 
-  res.json({
-    email: req.session.email,
-    nombre: req.session.nombre,
-    apellido: req.session.apellido,
-    rol: req.session.rol,
-    visitas: req.session.visitas
-  })
+app.put('/usuario', async (req, res) => {
+  try {
+
+    if (!req.session.email) {
+      return res.status(401).json({
+        error: "No autenticado"
+      })
+    }
+
+    const { nombre, apellido } = req.body
+
+    await Usuario.findOneAndUpdate(
+      { email: req.session.email },
+      {
+        nombre,
+        apellido
+      }
+    )
+
+    const usuarioActualizado = await Usuario.findOne({
+      email: req.session.email
+    })
+
+    req.session.nombre = usuarioActualizado.nombre
+    req.session.apellido = usuarioActualizado.apellido
+
+    res.json({
+      email: usuarioActualizado.email,
+      nombre: usuarioActualizado.nombre,
+      apellido: usuarioActualizado.apellido,
+      rol: usuarioActualizado.rol
+    })
+
+  } catch (error) {
+    res.status(500).json({
+      error: "Error actualizando usuario"
+    })
+  }
 })
 
 // ======================
