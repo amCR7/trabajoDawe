@@ -7,6 +7,7 @@ import FormularioNuevosProductos from './componentes/formularioNuevosProductos'
 import Carrito from './componentes/carrito'
 import Pie from './componentes/pie'
 import MiCuenta from './componentes/MiCuenta'
+import EditarBorrarProductos from './componentes/editarBorrarProductos'
 
 import {
   cargarCarrito,
@@ -32,6 +33,35 @@ function App() {
   //AGREGAR LOS PRODUCTOS DEL FORMULARIO
   const agregarProducto = (producto) => {
     setProductos([...productos, producto])
+  }
+
+  //ACTUALIZAR UN PRODUCTO EDITADO
+  const actualizarProducto = (productoActualizado) => {
+    setProductos((previos) =>
+      previos.map((producto) =>
+        producto.id === productoActualizado.id ? productoActualizado : producto
+      )
+    )
+
+    //Si el producto estaba en el carrito, también actualizamos sus datos allí
+    setCarrito((previo) =>
+      previo.map((item) =>
+        item.id === productoActualizado.id
+          ? { ...productoActualizado, cantidad: item.cantidad }
+          : item
+      )
+    )
+  }
+
+  //ELIMINAR PRODUCTOS BORRADOS DE LA LISTA Y DEL CARRITO
+  const eliminarProductos = (idsBorrados) => {
+    setProductos((previos) =>
+      previos.filter((producto) => !idsBorrados.includes(producto.id))
+    )
+
+    setCarrito((previo) =>
+      previo.filter((item) => !idsBorrados.includes(item.id))
+    )
   }
 
   const [vista, setVista] = useState("inicio")
@@ -283,6 +313,16 @@ function App() {
             />
           )}
 
+          {/* EDITAR / BORRAR PRODUCTOS */}
+          {vista === "editar" && usuario?.rol === "admin" && (
+            <EditarBorrarProductos
+              productos={productos}
+              onProductosBorrados={eliminarProductos}
+              onProductoActualizado={actualizarProducto}
+              deshabilitado={formularioDeshabilitado}
+            />
+          )}
+
           {/* MI CUENTA */}
           {vista === "cuenta" && usuario && (
             <MiCuenta 
@@ -291,7 +331,6 @@ function App() {
               estaOnline={estaOnline}
             />
           )}
-
         </main>
       </div>
   
